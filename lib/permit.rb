@@ -1,11 +1,11 @@
 require File.dirname(__FILE__) + '/permit/permit_rule'
 require File.dirname(__FILE__) + '/permit/permit_rules'
 require File.dirname(__FILE__) + '/permit/controller'
+require File.dirname(__FILE__) + '/models/association'
 require File.dirname(__FILE__) + '/models/role'
 require File.dirname(__FILE__) + '/models/person'
 require File.dirname(__FILE__) + '/models/authorization'
 require File.dirname(__FILE__) + '/models/authorizable'
-require File.dirname(__FILE__) + '/models/association'
 
 module Permit
   # allow|deny [:named_role|:person|:all|:guest|[]],
