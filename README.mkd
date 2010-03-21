@@ -1,11 +1,11 @@
 # Permit
 
-**Source:** [http://github.com/dnd/permit](http://github.com/dnd/permit)
-**Issues:** [http://github.com/dnd/permit/issues](http://github.com/dnd/permit/issues)
-**Docs:** [http://rdoc.info/projects/permit](http://github.com/projects/permit)
-**Author:** Steve Valaitis
-**Copyright:** 2010
-**License:** MIT License
+**Source:**    [http://github.com/dnd/permit](http://github.com/dnd/permit)  
+**Issues:**    [http://github.com/dnd/permit/issues](http://github.com/dnd/permit/issues)  
+**Docs:**      [http://rdoc.info/projects/permit](http://github.com/projects/permit)  
+**Author:**    Steve Valaitis  
+**Copyright:** 2010  
+**License:**   MIT License
 
 
 ## What is it?
