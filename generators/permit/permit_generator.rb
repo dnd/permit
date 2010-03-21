@@ -8,7 +8,7 @@ class PermitGenerator < Rails::Generator::Base
       @authorization_class = (args.shift || 'Authorization').camelize
       @role_class = (args.shift || 'Role').camelize
 
-      m.file 'initializer.rb', 'config/initializers/permit.rb'
+      m.template 'initializer.rb', 'config/initializers/permit.rb'
 
       if options[:setup_named_roles]
         m.template 'role.rb', "app/models/#{role_class.underscore}.rb"

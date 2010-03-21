@@ -10,8 +10,6 @@ module Permit
         def permit_person
           return if include? Permit::Models::PersonExtensions::PersonInstanceMethods
 
-          Permit::Config.person_class = self
-
           has_many :authorizations, :extend => Permit::Models::AssociationExtensions
 
           include Permit::Support

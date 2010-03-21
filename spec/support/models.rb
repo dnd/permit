@@ -3,7 +3,6 @@
 module Permit::Specs
   class Person < ActiveRecord::Base
     include Permit::Specs
-    permit_person
 
     has_and_belongs_to_many :teams
 
@@ -20,13 +19,11 @@ module Permit::Specs
 
   class Role < ActiveRecord::Base
     include Permit::Specs
-    permit_role
 
   end
 
   class Authorization < ActiveRecord::Base
     include Permit::Specs
-    permit_authorization
   end
 
   class Project < ActiveRecord::Base

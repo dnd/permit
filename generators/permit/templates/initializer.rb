@@ -1,3 +1,13 @@
+# Sets up the core models to be used for authorizations, people, and roles. This 
+# call is only required if you are using named authorizations, and may only be 
+# called once. If you are not using named authorizations you may leave this 
+# commented out.
+<%if options[:setup_named_roles] -%>
+Permit::Config.set_core_models(<%=authorization_class%>, <%=person_class%>, <%=role_class%>)
+<%else -%>
+# Permit.Config.set_core_models(Authorization, Person, Role)
+<%end -%>
+
 # Controls the default response given by PermitRules#permitted? when no rules 
 # match. To automatically allow access if no rules match, set this to :allow. 
 # Default is :deny.

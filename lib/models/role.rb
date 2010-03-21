@@ -9,8 +9,6 @@ module Permit
         def permit_role
           return if include? Permit::Models::RoleExtensions::RoleInstanceMethods
 
-          Permit::Config.role_class = self
-
           has_many :authorizations, :extend => Permit::Models::AssociationExtensions
 
           validates_presence_of :key, :name

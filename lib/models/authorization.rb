@@ -9,8 +9,6 @@ module Permit
         # Defines the current model class as handling authorizations for Permit.
         def permit_authorization
           return if include? Permit::Models::AuthorizationExtensions::AuthorizationInstanceMethods
-
-          Permit::Config.authorization_class = self
           
           belongs_to :resource, :polymorphic => true
           belongs_to :person

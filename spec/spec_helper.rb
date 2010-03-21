@@ -52,3 +52,5 @@ end
 require File.dirname(__FILE__) + "/support/models"
 require File.dirname(__FILE__) + "/support/permits_controller"
 require File.dirname(__FILE__) + "/support/helpers"
+
+Permit::Config.set_core_models(Permit::Specs::Authorization, Permit::Specs::Person, Permit::Specs::Role) #unless Permit::Config.models_defined?
