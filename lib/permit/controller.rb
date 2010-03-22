@@ -6,6 +6,11 @@ module Permit
       klass.send :extend, PermitClassMethods
       klass.send :permit_rules=, PermitRules.new(Rails.logger)
       klass.send :helper_method, :authorized?, :allowed?, :denied?
+
+      # This is only needed in development mode since models are not cached, and
+      # causes the models to end up in a weird state.  This forces Permit to
+      # reestablish the core classes it uses internally.
+      klass.send :before_filter, :reset_permit_core if Rails.env.development?
     end
 
     module PermitClassMethods
@@ -44,6 +49,17 @@ module Permit
 
     module PermitInstanceMethods
       protected
+      # Forces Permit to reload its core classes based off of those given in the
+      # initial call to Permit::Config.set_core_models. You shouldn't have any
+      # need to call this manually.
+      def reset_permit_core
+        authz = Object.const_get Permit::Config.authorization_class.class_name
+        person = Object.const_get Permit::Config.person_class.class_name
+        role = Object.const_get Permit::Config.role_class.class_name
+        Permit::Config.set_core_models(authz, person, role)
+        return true
+      end
+
       # Called by {#check_authorizations} when a person is not authorized to 
       # access the current action. It calls +render_optional_error_file(401)+ on 
       # the controller, to render a Not Authorized error.
