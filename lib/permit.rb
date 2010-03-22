@@ -1,3 +1,4 @@
+require File.dirname(__FILE__) + '/permit/support'
 require File.dirname(__FILE__) + '/permit/permit_rule'
 require File.dirname(__FILE__) + '/permit/permit_rules'
 require File.dirname(__FILE__) + '/permit/controller'
@@ -50,15 +51,16 @@ module Permit
     # to anything else, they will be denied.
     @@default_access = :deny
 
-    cattr_accessor :action_aliases
-    cattr_accessor :default_access
-
     class << self
       def authorization_class; @@authorization_class; end
       def person_class; @@person_class; end
       def role_class; @@role_class; end
       def authorizable_classes; @@authorizable_classes; end
       def models_defined?; @@models_defined; end
+
+      def action_aliases; @@action_aliases; end
+      def default_access; @@default_access; end
+      def default_access=(access); @@default_access = access; end
 
       def set_core_models(authorization, person, role)
         #raise PermitConfigurationError, "Core models cannot be redefined." if @@models_defined
@@ -71,6 +73,19 @@ module Permit
         @@authorization_class.send :permit_authorization
         @@person_class.send :permit_person
         @@role_class.send :permit_role
+      end
+
+      # Forces Permit to reload its core classes based off of those given in the
+      # initial call to Permit::Config.set_core_models. This is primarily needed 
+      # so that Permit will work in Rails development mode because of class 
+      # caching/reloading. These variables hang onto the original models as they 
+      # were defined and end up in a weird state. Production does not experience 
+      # this problem.
+      def reset_core_models
+        authz = Object.const_get authorization_class.name
+        person = Object.const_get person_class.name
+        role = Object.const_get role_class.name
+        Permit::Config.set_core_models(authz, person, role)
       end
     end
   end

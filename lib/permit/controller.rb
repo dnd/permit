@@ -50,14 +50,10 @@ module Permit
 
     module PermitInstanceMethods
       protected
-      # Forces Permit to reload its core classes based off of those given in the
-      # initial call to Permit::Config.set_core_models. You shouldn't have any
-      # need to call this manually.
+      # Needed to reset the core models in development mode as they were defined
+      # in the initializer for Permit.
       def reset_permit_core
-        authz = Object.const_get Permit::Config.authorization_class.class_name
-        person = Object.const_get Permit::Config.person_class.class_name
-        role = Object.const_get Permit::Config.role_class.class_name
-        Permit::Config.set_core_models(authz, person, role)
+        Permit::Config.reset_core_models
         return true
       end
 

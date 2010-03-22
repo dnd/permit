@@ -247,6 +247,25 @@ module Permit::Specs
         end
       end
     end
+
+    describe "resetting core models" do
+      before {controller.stub!(:current_person).and_return(Guest.new)}
+
+      it "should reset the core models in development mode" do
+        # Can't find a good way to test this since development mode needs to be
+        # simulated before the controller is loaded.
+
+        #Rails.env.stub!(:development?).and_return(true)
+        #Permit::Config.should_receive(:reset_core_models)
+        #get :index
+      end
+
+      it "should not reset the core models when not in dev mode" do 
+        controller.should_not_receive(:reset_permit_core)
+        Permit::Config.should_not_receive(:reset_core_models)
+        get :index
+      end
+    end
   end
 
   describe ControllerExtensions, :type => :controller do
