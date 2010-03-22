@@ -125,7 +125,7 @@ module Permit
       applicable_rules = (rules[action] || []) + (rules[:all] || [])
       applicable_rules.each do |rule|
         if rule.matches?(person, context_binding) 
-          @logger.info "#{person.to_s} matched #{type.to_s} rule: #{rule.to_s}"
+          @logger.info "#{person.inspect} matched #{type.to_s} rule: #{rule.inspect}"
           return true
         end
       end
