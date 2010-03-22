@@ -35,15 +35,16 @@ module Permit
         rules = PermitRules.new(Rails.logger, options)
         rules.instance_eval(&block) if block_given?
         self.permit_rules = rules
-        set_before_filter
+        set_permit_before_filter
       end
 
       private
-      def set_before_filter
-        unless (@before_filter_declared ||= false)
-          before_filter :check_authorizations
-          @before_filter_declared = true
-        end
+      def set_permit_before_filter
+        # Remove check_authorizations if it was set in a super class so that
+        # other before filters that possibly set the needed resource have a
+        # chance to run.
+        filter_chain.delete_if {|f| f.method == :check_authorizations}
+        before_filter :check_authorizations unless filter_chain.include?(:check_authorizations)
       end
     end
 
