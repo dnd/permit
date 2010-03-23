@@ -25,6 +25,5 @@ end
 desc 'Generate YARDocs'
 YARD::Rake::YardocTask.new do |t|
   t.files   = ['lib/**/*.rb']
-  t.options = ['--protected']
 end
 
