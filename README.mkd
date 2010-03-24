@@ -205,10 +205,9 @@ To setup a model to be used as a resource for authorization, call
 `permit_authorizable` inside of it.
 
 #### Associations
-The person, role, and resource models are setup with a `has_many
-:authorizations` association. This association is extended with a few methods
-that are documented in
-[AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
+The person, role, and resource models are setup with a `has_many :authorizations` 
+association. This association is extended with a few methods that are documented
+in [AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
 
 #### Person
 The person model is extended with a few methods to simplify authorizing, and
