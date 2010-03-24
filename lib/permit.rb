@@ -36,8 +36,6 @@ module Permit
     @@models_defined = false
     @@authorizable_classes = []
 
-    # Actions that when given to {PermitRules#allow}, and {PermitRules#deny} 
-    # will be expanded into the actions given in the value array.
     @@action_aliases = {
       :create => [:new, :create], 
       :update => [:edit, :update], 
@@ -58,8 +56,20 @@ module Permit
       def authorizable_classes; @@authorizable_classes; end
       def models_defined?; @@models_defined; end
 
+      # Actions that when given to {PermitRules#allow}, and {PermitRules#deny} 
+      # will be expanded into the actions given in the value array.
       def action_aliases; @@action_aliases; end
+
+      # Indicates the response that PermitRules will take if no
+      # authorizations match. If set to +:allow+ then a subject will be given
+      # access unless denied. By default this is set to +:deny+
+      #
+      # @return the current default access.
       def default_access; @@default_access; end
+
+      # Sets the response that PermitRules will use when no rules match.
+      #
+      # @param [:allow, :deny] access the default response to use.
       def default_access=(access); @@default_access = access; end
 
       def set_core_models(authorization, person, role)

@@ -26,11 +26,13 @@ module Permit
       #     allow [:project_manager, :developer], :on => :project, :to => :all
       #   end
       #
-      # @param [Hash] options (see PermitRules#initialize) for valid options.
-      # @param [Block] &block the block containing the authorization rules.
-      #
-      # @see PermitRules#allow for syntax for +allow+ rules
-      # @see PermitRules#deny for syntax for +deny+ rules
+      # @param [Hash] options options to use when evaluating this block of
+      #   authorizations.
+      # @option options [:allow, :deny] :default_access overrides the
+      #   {Permit::Config.default_access} setting.
+      # @param [Block] &block the block containing the authorization rules. See
+      #   {PermitRules#allow} and {PermitRules#deny} for the syntax for the
+      #   respective types of rules.
       def permit(options = {}, &block)
         rules = PermitRules.new(Rails.logger, options)
         rules.instance_eval(&block) if block_given?

@@ -1,36 +1,194 @@
 # Permit
+A flexible controller authorization tool for Ruby on Rails.
 
 **Source:**    [http://github.com/dnd/permit](http://github.com/dnd/permit)  
 **Issues:**    [http://github.com/dnd/permit/issues](http://github.com/dnd/permit/issues)  
-**Docs:**      [http://rdoc.info/projects/permit](http://rdoc.info/projects/dnd/permit)  
+**Docs:**      [http://yardoc.org/docs/dnd-permit](http://yardoc.org/docs/dnd-permit)  
 **Author:**    Steve Valaitis  
 **Copyright:** 2010  
 **License:**   MIT License
 
+* [Description](#description)
+* [Installation & Usage](#usage)
+* [Problems](#problems)
 
-## What is it?
-Permit is a flexible authorization tool for Ruby on Rails.
+<a id="description"/>
+## How does it work?
+Permit works by allowing you to define a series of allow or deny rules to
+authorize a person. The rules that apply for the action of the current request
+are then evaluated against the current person. Rule evaluation stops as soon as
+a match is found. If a deny rule matches, `#access_denied` will be called, and
+the person will be prevented from accessing the action. If an allow rule
+matches, the person will be directed to the action as normal.  If no rules
+match, the person will be denied access. This can be overridden either at the
+global or controller level by setting the `default_access` option to `:allow`.
+Keep in mind that _deny rules are always run first_.
 
-## What does it do?
+There are three different types of authorizations that you can use with Permit.
+They are as follows:
 
 ### Static Authorizations
+These are the most basic forms of authorization and allow you to use one of
+these roles by itself to authorize someone.
+
+  * `:everyone` - Exactly what it says, an authorization that applies to everyone.
+  * `:guest` - Indicates a guest to the application, and only matches if
+    `current_person#guest?` returns `true`.
+  * `:person` - Indicates an authorized person, and only matches if
+    `current_person#guest?` returns `false`.
+
+Example:
+
+    allow :guest, :to => :index
 
 ### Dynamic Authorization
+When using the `:person` role, you can additionally specify the `:who`/`:that` and
+`:of`/`:on` options. This will cause the current person object to be sent as an
+argument to the method indicated by `:who`/`:that` on the target resource
+indicated by `:of`/`:on`. If the method call returns `true` then the rule will be
+a match. 
+
+If the symbol given to `:who`/`:that` is prefixed with `is_` some special sugar will be
+applied, causing Permit to try and use various methods on the resource. You can
+see these methods in the documentation for
+[PermitRule#initialize](http://yardoc.org/docs/dnd-permit/Permit/PermitRule:initialize)
+
+A dynamic authorization might look like this:
+
+    allow :person, :who => :is_owner, :of => :project, :to => :write
 
 ### Named Authorizations
+These are authorizations using custom roles that you define in the database and
+are mapped to a person in an authorizations table. A person may be granted a
+role for a given resource, more than one resource, or no resource at
+all\(depending on what the role definition allows\).
 
+Some named authorizations might look like:
 
-## How do you use it?
+    allow :admin, :of => :team, :to => :show
+    allow [:project_owner, :project_manager], :of => :project, :to => :all
+
+<a id="usage"/>
+## How do I use it?
 
 ### Installation
+You can install Permit as a plugin:
+
+    script/plugin install git://github.com/dnd/permit.git
 
 ### Setup
+
+#### Pre-requisites
+You must have a `Person` model, _or_ some other model that represents an
+authorized user of the system that responds to `#guest?`. Permit will not create
+this model for you. You can get as fancy as you want with the `guest?` method, 
+but a simple example would be:
+
+     def guest?
+       new_record?
+     end
+
+#### Generation
+If you are not going to use named authorizations, run:
+
+    script/generate permit [Person] --init-only
+
+If you are going to use named authorizations you can run:
+
+    script/generate permit [Person [Authorization [Role]]]
+
+You are not required to pass in any arguments to the generator. The arguments
+above are optional, and reflect the default names that Permit uses. These only
+need to be specified if you want to use different class name(s).  So if you
+wanted to use an existing `Employee` class for authorization instead of the
+default `Person`, run:
+
+    script/generate permit Employee
+
+For full details on the generator take a look at the `--help`
+
+Run the migration for the roles and authorizations:
+
+    rake db:migrate
+
+#### Controller
+Include Permit in your `ApplicationController`:
+
+    include Permit::ControllerExtensions
+
+Create a method that returns the current authorization subject. This will by
+default be inferred from the class name given to Permit for initialization, and
+takes the form of `current_*`. So if the class was `Person`, Permit would look
+for `current_person`. For `User` it would be `current_user`, etc... If the
+method you want to use doesn't follow this convention it can be overridden in
+the initializer.
+
+    Permit::Config.controller_subject_method = :logged_user
 
 ### Usage
 
 #### Controller
+After you have "included" Permit into your controller, it is still not active.
+For that you must define a block of rules by calling `permit` in your
+controller. If you want to by default protect all of your controllers, you can
+just make an empty permit call in your base controller class\(such as
+`ApplicationController`\).
+
+Something to keep in mind is that when `permit` is called, a before filter is
+set to check the authorizations. Any setup that you need to do for setting
+the current subject, or the resource to be used in `:of`/`:on` criteria needs to
+be done through before filters set prior to this call.
+
+_**The rules defined in `permit` blocks are not additive.** When a new `permit` call
+is made, it wipes out any previously set rules. It also resets the before filter
+position for checking the authorizations thus allowing you to add any other
+before filters you may need in your implementing controller._
+
+You can create "allow" and "deny" rules by passing at minimum, a role, and one
+or more actions that the rule applies to. The actions will be expanded using the
+aliases defined in
+[Permit::Config.action_aliases](http://yardoc.org/docs/dnd-permit/Permit/Config.action_aliases),
+and are expanded in a non-recursive fashion. You can optionally pass `:all` for
+the action, which will cause the rule to be tested for all actions. "allow"
+rules accept the `:to` key for actions, and "deny" rules accept the `:from` key.
+
+For the full documentation and description of options you can use for creating rules
+see the documentation for
+[PermitRule#initialize](http://yardoc.org/docs/dnd-permit/Permit/PermitRule:initialize)
+
+    permit do
+      deny :person, :from => [:write, :destroy], :if => Proc.new {|person, binding| person.status == :on_leave}
+      allow :person, :who => :has_commented?, :on => :article, :to => :show
+      allow :person, :who => :is_author, :of => :article, :to => [:read, :write]
+      allow :admin, :to => :all
+    end
+
+> Deny a person from new, create, edit, update, delete, destroy if they are on leave.
+
+> Allow a person who has commented on the article to show. `@article.has_commented?(current_person)`
+
+> Allow person who is the author of the article to index, show, new, create,
+> edit, and update. `@article.author == current_person`
+
+> Allow a person that has the admin role for no resource to access any action.
+> `current_person.authorized?(:admin, nil)
+
+##### Helpers
+The following helpers are included for use in your views, or for one off
+operations in your controllers.
+
+  * `allowed?` - Returns `true` if the person matches the rule criteria
+  * `denied?` - Returns `true` if the person does not match the rule criteria
+  * `authorized?` - Calls `current_person.authorized?`
+
+See [Permit::ControllerExtensions::InstanceMethods]() for the full documentation
+on these methods.
+
 
 #### Models
+This aspect of Permit only applies if you are using named authorizations.
 
-
+<a id="problems"/>
 ## Problems?
+Please use the [GitHub issue tracker](http://github.com/dnd/permit/issues) for
+any bugs, problems, or unexpected behavior you run across while using Permit.

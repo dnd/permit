@@ -73,7 +73,7 @@ module Permit
     # @param [permit_person] person the person to evaluate for authorization
     # @param [Binding] context_binding the binding to use to locate the resource 
     #   and/or evaluate the if/unless conditions.
-    # @return [true, false] true if the person matches the rule, otherwise 
+    # @return [Boolean] true if the person matches the rule, otherwise 
     #   false.
     # @raise [PermitEvaluationError] if there is a problem evaluating the rule.
     def matches?(person, context_binding)

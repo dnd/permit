@@ -42,10 +42,10 @@ module Permit
 
     # Adds an allow rule for the given actions to the collection.
     #
-    # @example Allow a person that is a member of a project to show
-    #   allow :person, :who => is_member, :of => :project, :to => :show
-    # @example Allow a person with either of the named roles for a resource to see the index.
-    #   allow [:project_admin, :project_manager], :of => :team, :to => :index
+    # @example Allow a person that is a member of a team to show
+    #   allow :person, :who => :is_member, :of => :team, :to => :show
+    # @example Allow a person with either of the named roles for a resource to perform any "write" operations.
+    #   allow [:project_admin, :project_manager], :of => :project, :to => :write
     #
     # @param [Symbol, <Symbol>] roles the role(s) that the rule will apply to.
     # @param [Hash] options the options used to build the rule.
@@ -60,7 +60,9 @@ module Permit
     # @option options [Symbol] :on alias for +:of+
     # @option options [Symbol, <Symbol>] :to the action(s) to allow access to if this 
     #   rule matches. +:all+ may be given to indicate that access is given to all 
-    #   actions if the rule matches.
+    #   actions if the rule matches. Actions will be expanded using the aliases
+    #   defined in {Permit::Config.action_aliases}. The expansion operation is
+    #   not recursive.
     # @return [PermitRule] the rule that was created for the parameters.
     # @raise [PermitConfigurationError] if +:to+ is not valid, or if the rule 
     #   cannot be created.
@@ -74,9 +76,9 @@ module Permit
     # Adds an deny rule for the given actions to the collection.
     #
     # @example Deny a person that is a member of a project from :show
-    #   deny :person, :who => is_member, :of => :project, :from => :show
-    # @example Deny a person with either of the named roles for a resource from seeing the index.
-    #   deny [:project_admin, :project_manager], :of => :team, :from => :index
+    #   deny :person, :who => :is_member, :of => :project, :from => :show
+    # @example Deny a person with either of the named roles for a resource from writing.
+    #   deny [:project_admin, :project_manager], :of => :project, :from => :write
     #
     # @param [Symbol, <Symbol>] roles the role(s) that the rule will apply to.
     # @param [Hash] options the options used to build the rule.
@@ -91,7 +93,9 @@ module Permit
     # @option options [Symbol] :on alias for +:of+
     # @option options [Symbol, <Symbol>] :from the action(s) to deny access to if this 
     #   rule matches. +:all+ may be given to indicate that access is denied to all 
-    #   actions if the rule matches.
+    #   actions if the rule matches. Actions will be expanded using the aliases
+    #   defined in {Permit::Config.action_aliases}. The expansion operation is
+    #   not recursive.
     # @return [PermitRule] the rule that was created for the parameters.
     # @raise [PermitConfigurationError] if +:from+ is not valid, or if the rule 
     #   cannot be created.
