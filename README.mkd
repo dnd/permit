@@ -9,7 +9,8 @@ A flexible controller authorization tool for Ruby on Rails.
 **License:**   MIT License
 
 * [Description](#description)
-* [Installation & Usage](#usage)
+* [Installation & Setup](#setup)
+* [Usage](#usage)
 * [Problems](#problems)
 
 <span id="description"></span>
@@ -68,8 +69,8 @@ Some named authorizations might look like:
     allow :admin, :of => :team, :to => :show
     allow [:project_owner, :project_manager], :of => :project, :to => :all
 
-<span id="usage"></span>
-## How do I use it?
+<span id="setup"></span>
+## How do I get it?
 
 ### Installation
 You can install Permit as a plugin:
@@ -125,9 +126,10 @@ the initializer.
 
     Permit::Config.controller_subject_method = :logged_user
 
-### Usage
+<span id="usage"></span>
+## Usage
 
-#### Controller
+### Controller
 After you have "included" Permit into your controller, it is still not active.
 For that you must define a block of rules by calling
 [`permit`](http://yardoc.org/docs/dnd-permit/Permit/ControllerExtensions/PermitClassMethods:permit)
@@ -174,7 +176,7 @@ see the documentation for
 > Allow a person that has the admin role for no resource to access any action.
 > `current_person.authorized?(:admin, nil)
 
-##### Helpers
+#### Helpers
 The following helpers are included for use in your views, or for one off
 operations in your controllers.
 
@@ -187,7 +189,7 @@ See
 for the full documentation on these methods.
 
 
-#### Models
+### Models
 _This aspect of Permit only applies if you are using named authorizations._
 
 Named authorizations are setup based on the call to
@@ -198,16 +200,16 @@ authorization, person, and role models by calling `permit_authorization`,
 The extensions for authorization, and role setup some basic validations to
 ensure the integrity of the models.
 
-##### Resources
+#### Resources
 To setup a model to be used as a resource for authorization, call
 `permit_authorizable` inside of it.
 
-##### Associations
+#### Associations
 The person, role, and resource models are setup with a `has_many
 :authorizations` association. This association is extended with a few methods
 that are documented in [AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
 
-##### Person
+#### Person
 The person model is extended with a few methods to simplify authorizing, and
 revoking roles, as well as checking if the person is authorized on a given set
 of roles for a resource. These methods are documented in
