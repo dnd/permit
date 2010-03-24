@@ -182,8 +182,9 @@ operations in your controllers.
   * `denied?` - Returns `true` if the person does not match the rule criteria
   * `authorized?` - Calls `current_person.authorized?`
 
-See [Permit::ControllerExtensions::InstanceMethods]() for the full documentation
-on these methods.
+See
+[Permit::ControllerExtensions::InstanceMethods](http://yardoc.org/docs/dnd-permit/Permit/ControllerExtensions/PermitInstanceMethods)
+for the full documentation on these methods.
 
 
 #### Models
