@@ -129,9 +129,10 @@ the initializer.
 
 #### Controller
 After you have "included" Permit into your controller, it is still not active.
-For that you must define a block of rules by calling `permit` in your
-controller. If you want to by default protect all of your controllers, you can
-just make an empty permit call in your base controller class\(such as
+For that you must define a block of rules by calling
+[`permit`](http://yardoc.org/docs/dnd-permit/Permit/ControllerExtensions/PermitClassMethods:permit)
+in your controller. If you want to by default protect all of your controllers,
+you can just make an empty permit call in your base controller class\(such as
 `ApplicationController`\).
 
 Something to keep in mind is that when `permit` is called, a before filter is
@@ -157,13 +158,13 @@ see the documentation for
 [PermitRule#initialize](http://yardoc.org/docs/dnd-permit/Permit/PermitRule:initialize)
 
     permit do
-      deny :person, :from => [:write, :destroy], :if => Proc.new {|person, binding| person.status == :on_leave}
+      deny :person, :from => [:write, :destroy], :if => Proc.new {|person, context| person.status == :on_leave}
       allow :person, :who => :has_commented?, :on => :article, :to => :show
       allow :person, :who => :is_author, :of => :article, :to => [:read, :write]
       allow :admin, :to => :all
     end
 
-> Deny a person from new, create, edit, update, delete, destroy if they are on leave.
+> Deny a person from new, create, edit, update, delete, and destroy if they are on leave.
 
 > Allow a person who has commented on the article to show. `@article.has_commented?(current_person)`
 
@@ -186,7 +187,30 @@ on these methods.
 
 
 #### Models
-This aspect of Permit only applies if you are using named authorizations.
+_This aspect of Permit only applies if you are using named authorizations._
+
+Named authorizations are setup based on the call to
+`Permit::Config.set_core_models` in your initializer. This call sets up your
+authorization, person, and role models by calling `permit_authorization`,
+  `permit_person`, and `permit_role` on them respectively.
+
+The extensions for authorization, and role setup some basic validations to
+ensure the integrity of the models.
+
+##### Resources
+To setup a model to be used as a resource for authorization, call
+`permit_authorizable` inside of it.
+
+##### Associations
+The person, role, and resource models are setup with a `has_many
+:authorizations` association. This association is extended with a few methods
+that are documented in [AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
+
+##### Person
+The person model is extended with a few methods to simplify authorizing, and
+revoking roles, as well as checking if the person is authorized on a given set
+of roles for a resource. These methods are documented in
+[PersonInstanceMethods](http://yardoc.org/docs/dnd-permit/Permit/Models/PersonExtensions/PersonInstanceMethods).
 
 <a id="problems"/>
 ## Problems?
