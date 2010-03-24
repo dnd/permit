@@ -12,7 +12,7 @@ A flexible controller authorization tool for Ruby on Rails.
 * [Installation & Usage](#usage)
 * [Problems](#problems)
 
-<a id="description"/>
+<span id="description"></span>
 ## How does it work?
 Permit works by allowing you to define a series of allow or deny rules to
 authorize a person. The rules that apply for the action of the current request
@@ -68,7 +68,7 @@ Some named authorizations might look like:
     allow :admin, :of => :team, :to => :show
     allow [:project_owner, :project_manager], :of => :project, :to => :all
 
-<a id="usage"/>
+<span id="usage"></span>
 ## How do I use it?
 
 ### Installation
@@ -212,7 +212,7 @@ revoking roles, as well as checking if the person is authorized on a given set
 of roles for a resource. These methods are documented in
 [PersonInstanceMethods](http://yardoc.org/docs/dnd-permit/Permit/Models/PersonExtensions/PersonInstanceMethods).
 
-<a id="problems"/>
+<span id="problems"></span>
 ## Problems?
 Please use the [GitHub issue tracker](http://github.com/dnd/permit/issues) for
 any bugs, problems, or unexpected behavior you run across while using Permit.
