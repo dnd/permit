@@ -127,7 +127,7 @@ the initializer.
     Permit::Config.controller_subject_method = :logged_user
 
 <span id="usage"></span>
-## Usage
+## How do I use it?
 
 ### Controller
 After you have "included" Permit into your controller, it is still not active.
@@ -195,7 +195,7 @@ _This aspect of Permit only applies if you are using named authorizations._
 Named authorizations are setup based on the call to
 `Permit::Config.set_core_models` in your initializer. This call sets up your
 authorization, person, and role models by calling `permit_authorization`,
-  `permit_person`, and `permit_role` on them respectively.
+`permit_person`, and `permit_role` on them respectively.
 
 The extensions for authorization, and role setup some basic validations to
 ensure the integrity of the models.
@@ -207,7 +207,8 @@ To setup a model to be used as a resource for authorization, call
 #### Associations
 The person, role, and resource models are setup with a `has_many
 :authorizations` association. This association is extended with a few methods
-that are documented in [AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
+that are documented in
+[AssociationExtensions](http://yardoc.org/docs/dnd-permit/Permit/Models/AssociationExtensions)
 
 #### Person
 The person model is extended with a few methods to simplify authorizing, and
