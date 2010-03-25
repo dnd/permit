@@ -13,6 +13,13 @@ Spec::Rake::SpecTask.new 'spec' do |t|
   t.spec_opts = ["--colour"]
 end
 
+desc 'Run all specs with rcov'
+Spec::Rake::SpecTask.new 'rcov' do |t|
+  t.spec_files = FileList['spec']
+  t.rcov = true
+  t.rcov_opts = ['--exclude', 'spec,app/,config/,rubygems/']
+end
+
 desc 'Generate documentation for the permit plugin.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
