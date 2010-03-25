@@ -76,7 +76,7 @@ module Permit
       # current action. If the person is not permitted {#access_denied} will be 
       # called.
       def check_authorizations
-        return access_denied unless self.permit_rules.permitted?(current_person, params[:action].to_sym, binding)
+        return access_denied unless self.permit_rules.permitted?(permit_authorization_subject, params[:action].to_sym, binding)
         true
       end
 
@@ -89,7 +89,7 @@ module Permit
       # @return [Boolean] true if the rule matches, otherwise false.
       def allowed?(roles, options = {})
         rule = PermitRule.new roles, options
-        rule.matches? current_person, binding
+        rule.matches? permit_authorization_subject, binding
       end
 
       # Creates a PermitRule with the arguments that are given, and attempts to 
@@ -109,7 +109,23 @@ module Permit
       # For information on the parameters for this method see 
       # {Permit::Models::PersonExtensions::PersonInstanceMethods#authorized?}
       def authorized?(roles, resource)
-        current_person.guest? ? false : current_person.authorized?(roles, resource)
+        permit_authorization_subject.guest? ? false : permit_authorization_subject.authorized?(roles, resource)
+      end
+
+    private
+      def permit_authorization_subject
+        return send(@controller_subject_method) if @controller_subject_method
+
+        @controller_subject_method = if Permit::Config.controller_subject_method
+          Permit::Config.controller_subject_method
+        elsif Permit::Config.person_class
+          klass_name = Permit::Config.person_class.class_name.underscore
+          "current_#{klass_name}".to_sym
+        else
+          :current_person
+        end
+
+        send(@controller_subject_method)
       end
     end
   end

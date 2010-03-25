@@ -1,6 +1,9 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 module Permit::Specs
+  class EmployeeAdmin < ActiveRecord::Base
+  end
+
   class BaseController < ActionController::Base
     include Permit::ControllerExtensions
 
@@ -146,6 +149,27 @@ module Permit::Specs
         it "should render a 401 error" do
           get :index
           response.body.should == "guest denied"
+        end
+      end
+
+      describe "getting the authorization subject" do
+        it "should use the config value when present" do
+          Permit::Config.stub!(:controller_subject_method).and_return(:logged_user)
+          controller.should_receive(:logged_user).and_return(Guest.new)
+          get :index
+        end
+
+        it "should infer the method name from the config person_class" do
+          Permit::Config.stub!(:person_class).and_return(Permit::Specs::EmployeeAdmin)
+          controller.should_receive(:current_employee_admin).and_return(Guest.new)
+          get :index
+        end
+
+        it "should default to 'current_person'" do
+          Permit::Config.stub!(:controller_subject_method).and_return(nil)
+          Permit::Config.stub!(:person_class).and_return(nil)
+          controller.should_receive(:current_person).and_return(Guest.new)
+          get :index
         end
       end
     end

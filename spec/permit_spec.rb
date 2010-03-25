@@ -1,6 +1,16 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
 describe Permit::Config do
+  describe "defaults" do
+    it "controller_subject_method should default to nil" do
+      Permit::Config.controller_subject_method.should be_nil
+    end
+
+    it "default_access should be :deny" do
+      Permit::Config.default_access.should == :deny
+    end
+  end
+
   describe "#set_core_models" do
     before :all do
       @auth = Permit::Config.authorization_class

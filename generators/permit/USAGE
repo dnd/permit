@@ -10,9 +10,12 @@ Description:
   script/generate permit [Person [Authorization [Role]]]
 
   If you don't want to use named authorizations, and only want to generate the 
-  initializer pass in the --init-only option.
+  initializer pass in the --init-only option. You can optionally pass the name
+  of the class that represents an authenticated user and the generator will set
+  the name of the current_* method to use to retrieve the subject for
+  authorization.
 
-  script/generate permit --init-only
+  script/generate permit [Person] --init-only
 
 Example:
   script/generate permit

@@ -5,7 +5,17 @@
 <%if options[:setup_named_roles] -%>
 Permit::Config.set_core_models(<%=authorization_class%>, <%=person_class%>, <%=role_class%>)
 <%else -%>
-# Permit.Config.set_core_models(Authorization, Person, Role)
+# Permit::Config.set_core_models(Authorization, Person, Role)
+<%end -%>
+
+# Sets the method to use for retrieving the current authorization subject. Leave
+# this nil and Permit will infer the method name(current_*) from the
+# authorization subject model name given to #set_core_models. If named
+# authorizations aren't being used then this will default to :current_person.
+<%if !options[:setup_named_roles] && person_class != 'Person' -%>
+Permit::Config.controller_subject_method = :current_<%=person_class.underscore %>
+<%else -%>
+# Permit::Config.controller_subject_method = nil
 <%end -%>
 
 # Controls the default response given by PermitRules#permitted? when no rules 

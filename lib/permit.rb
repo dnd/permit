@@ -35,6 +35,7 @@ module Permit
     @@authorization_class, @@person_class, @@role_class = nil, nil, nil
     @@models_defined = false
     @@authorizable_classes = []
+    @@controller_subject_method = nil
 
     @@action_aliases = {
       :create => [:new, :create], 
@@ -72,6 +73,31 @@ module Permit
       # @param [:allow, :deny] access the default response to use.
       def default_access=(access); @@default_access = access; end
 
+      # The method to use to retrieve the current authorization subject when
+      # rules are being evaluated. If nil, then the method will be inferred from
+      # the subject set in the call to {set_core_models}.
+      #
+      # @return [Symbol, nil]
+      def controller_subject_method; @@controller_subject_method; end
+
+      # Sets the name of the method to use to retrieve the current subject
+      # while checking authorizations. Set to nil, to infer the value from the
+      # subject set in {set_core_models}, or :current_person if named
+      # authorizations are not being used.
+      #
+      # @param [nil, Symbol] method a symbol representing the method to use.
+      def controller_subject_method=(method); @@controller_subject_method = method; end
+
+      # Sets the core authorization, person, and role models to be used for
+      # named authorizations, and configures them with their respective permit_*
+      # methods.
+      #
+      # @param [Class] authorization an ActiveRecord model representing
+      #   authorizations.
+      # @param [Class] person an ActiveRecord model representing
+      #   people.
+      # @param [Class] role an ActiveRecord model representing
+      #   roles.
       def set_core_models(authorization, person, role)
         #raise PermitConfigurationError, "Core models cannot be redefined." if @@models_defined
 
