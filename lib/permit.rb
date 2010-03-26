@@ -51,11 +51,18 @@ module Permit
     @@default_access = :deny
 
     class << self
+      # The class that currently represents authorizations in the system, as set
+      # by {set_core_models}.
       def authorization_class; @@authorization_class; end
+      # The class that currently represents authorization subjects in the
+      # system, as set by {set_core_models}.
       def person_class; @@person_class; end
+      # The class that curretly represents roles in the system, as set by
+      # {set_core_models}.
       def role_class; @@role_class; end
+      # Classes that are marked as authorizable resources using
+      # {Permit::Models::AuthorizableExtensions::AuthorizableClassMethods#permit_authorizable permit_authorizable}.
       def authorizable_classes; @@authorizable_classes; end
-      def models_defined?; @@models_defined; end
 
       # Actions that when given to {PermitRules#allow}, and {PermitRules#deny} 
       # will be expanded into the actions given in the value array.
@@ -104,7 +111,6 @@ module Permit
         @@authorization_class = authorization
         @@person_class = person
         @@role_class = role
-        @@models_defined = true
 
         @@authorization_class.send :permit_authorization
         @@person_class.send :permit_person

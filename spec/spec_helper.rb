@@ -47,6 +47,23 @@ ActiveRecord::Schema.define(:version => 1) do
     t.integer :resource_id
     t.timestamps
   end
+
+  create_table :users do |t|
+    t.string :name
+  end
+    
+  create_table :jobs do |t|
+    t.string :key, :name, :description
+    t.boolean :requires_resource, :authorize_resource, :null => false, :default => true
+  end
+
+  create_table :entitlements do |t|
+    t.integer :user_id, :job_id, :null => false
+    t.string :resource_type
+    t.integer :resource_id
+    t.timestamps
+  end
+
 end
 
 require File.dirname(__FILE__) + "/support/models"

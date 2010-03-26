@@ -3,13 +3,14 @@ module Permit
     module RoleExtensions
       def self.included(klass)
         klass.extend RoleClassMethods
+        klass.extend Permit::Support::ClassMethods
       end
 
       module RoleClassMethods
         def permit_role
           return if include? Permit::Models::RoleExtensions::RoleInstanceMethods
 
-          has_many :authorizations, :extend => Permit::Models::AssociationExtensions
+          permit_authorized_model
 
           validates_presence_of :key, :name
           validates_inclusion_of :requires_resource, :authorize_resource, :in => [true, false]

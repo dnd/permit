@@ -3,6 +3,7 @@ module Permit
     module AuthorizableExtensions
       def self.included(klass)
         klass.extend AuthorizableClassMethods
+        klass.extend Permit::Support::ClassMethods
       end
 
       module AuthorizableClassMethods
@@ -11,7 +12,7 @@ module Permit
           
           Permit::Config.authorizable_classes << self
 
-          has_many :authorizations, :as => :resource, :extend => Permit::Models::AssociationExtensions
+          permit_authorized_model :as => :resource
 
           def resource_type
             self.base_class.to_s

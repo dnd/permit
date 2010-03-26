@@ -1,5 +1,28 @@
 module Permit
   module Support
+    module ClassMethods
+      def class_symbol
+        class_name.underscore.to_sym
+      end
+
+      def plural_class_symbol
+        class_name.pluralize.underscore.to_sym
+      end
+
+      private
+      def permit_authorized_model(custom_options = {})
+        options = {:class_name => Permit::Config.authorization_class.name, :extend => Permit::Models::AssociationExtensions}.merge(custom_options)
+        has_many Permit::Config.authorization_class.plural_class_symbol, options 
+
+        class_eval <<-END
+          protected
+          def permit_authorizations_proxy
+            #{Permit::Config.authorization_class.plural_class_symbol}
+          end
+        END
+      end
+    end
+
     # Converts an object to an array of that object if it is not already one.
     #
     # @param [Object] o the object to be made into an Array
@@ -11,7 +34,7 @@ module Permit
     protected
     def authorization_conditions(role, resource, person = nil)
       conditions = {}
-      conditions[:person_id] = person.id if person
+      conditions[Permit::Config.person_class.name.foreign_key] = person.id if person
       conditions.merge! role_condition(role)
       conditions.merge! resource_conditions(resource)
     end
@@ -22,7 +45,7 @@ module Permit
       r = get_roles(roles)
       ids = r.collect {|role| role.id}
 
-      return (ids.empty? ? {} : {:role_id => ids})
+      return (ids.empty? ? {} : {Permit::Config.role_class.name.foreign_key => ids})
     end
 
     def resource_conditions(resource)

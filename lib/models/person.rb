@@ -3,14 +3,15 @@ module Permit
     module PersonExtensions
       def self.included(klass)
         klass.extend PersonClassMethods
+        klass.extend Permit::Support::ClassMethods
       end
 
       module PersonClassMethods
         # Defines the current model class as handling people for Permit.
         def permit_person
           return if include? Permit::Models::PersonExtensions::PersonInstanceMethods
-
-          has_many :authorizations, :extend => Permit::Models::AssociationExtensions
+          
+          permit_authorized_model
 
           include Permit::Support
           include Permit::Models::PersonExtensions::PersonInstanceMethods
@@ -32,7 +33,7 @@ module Permit
             role = get_role(r)
             next unless role
             conditions = authorization_conditions(role, resource)
-            return true if authorizations.exists?(conditions)
+            return true if permit_authorizations_proxy.exists?(conditions)
           end
           return false
         end
@@ -51,7 +52,7 @@ module Permit
             role = get_role(r)
             return false unless role
             conditions = authorization_conditions(role, resource)
-            return false unless authorizations.exists?(conditions)
+            return false unless permit_authorizations_proxy.exists?(conditions)
           end
           return true
         end
@@ -74,8 +75,8 @@ module Permit
               role = get_role(r)
               next if authorized?(role, resource)
 
-              authz = authorizations.build
-              authz.role = role
+              authz = permit_authorizations_proxy.build
+              authz.send("#{Permit::Config.role_class.class_symbol}=", role)
               authz.resource = resource
               authz.save!
             end
