@@ -11,6 +11,7 @@ A flexible controller authorization tool for Ruby on Rails.
 * [Description](#description)
 * [Installation & Setup](#setup)
 * [Usage](#usage)
+* [Specs & Coverage](#specs)
 * [Problems](#problems)
 
 <span id="description"></span>
@@ -73,9 +74,19 @@ Some named authorizations might look like:
 ## How do I get it?
 
 ### Installation
-You can install Permit as a plugin:
+You can install Permit as a gem(make sure to add "`config.gem 'permit'`" to your
+`config/environment.rb` file):
+
+    sudo gem install permit
+
+or as a plugin:
 
     script/plugin install git://github.com/dnd/permit.git
+
+as a gem from source:
+
+    git clone git://github.com/dnd/permit.git
+    sudo rake install
 
 ### Setup
 
@@ -214,6 +225,12 @@ The person model is extended with a few methods to simplify authorizing, and
 revoking roles, as well as checking if the person is authorized on a given set
 of roles for a resource. These methods are documented in
 [PersonInstanceMethods](http://yardoc.org/docs/dnd-permit/Permit/Models/PersonExtensions/PersonInstanceMethods).
+
+<span id="specs"></span>
+## Specs & Coverage
+Permit currently has fairly high test coverage\(>95%\). To run the specs for
+Permit, the plugin will most likely need to be inside of an existing Rails
+application.
 
 <span id="problems"></span>
 ## Problems?
