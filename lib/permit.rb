@@ -32,12 +32,12 @@ module Permit
   # of all classes that are authorizable to roles by having defined 
   # +permit_authorizable+.
   class Config
-    @@authorization_class, @@person_class, @@role_class = nil, nil, nil
-    @@models_defined = false
-    @@authorizable_classes = []
-    @@controller_subject_method = nil
+    @authorization_class, @person_class, @role_class = nil, nil, nil
+    @authorizable_classes = []
+    @controller_subject_method = nil
 
-    @@action_aliases = {
+
+    @action_aliases = {
       :create => [:new, :create], 
       :update => [:edit, :update], 
       :destroy => [:delete, :destroy],
@@ -48,44 +48,55 @@ module Permit
     # Indicates the response returned by {PermitRules#permitted?} when no rules 
     # match. If set to +:allow+ then the person will be granted access. If set 
     # to anything else, they will be denied.
-    @@default_access = :deny
+    @default_access = :deny
 
     class << self
-      # The class that currently represents authorizations in the system, as set
-      # by {set_core_models}.
-      def authorization_class; @@authorization_class; end
-      # The class that currently represents authorization subjects in the
-      # system, as set by {set_core_models}.
-      def person_class; @@person_class; end
-      # The class that curretly represents roles in the system, as set by
-      # {set_core_models}.
-      def role_class; @@role_class; end
-      # Classes that are marked as authorizable resources using
-      # {Permit::Models::AuthorizableExtensions::AuthorizableClassMethods#permit_authorizable permit_authorizable}.
-      def authorizable_classes; @@authorizable_classes; end
-
       # Actions that when given to {PermitRules#allow}, and {PermitRules#deny} 
       # will be expanded into the actions given in the value array.
-      def action_aliases; @@action_aliases; end
+      #
+      # Defaults to:
+      #   {
+      #     :create => [:new, :create], 
+      #     :update => [:edit, :update], 
+      #     :destroy => [:delete, :destroy],
+      #     :read => [:index, :show], 
+      #     :write => [:new, :create, :edit, :update]
+      #   }
+      attr_reader :action_aliases
+
+      # The class that currently represents authorizations in the system, as set
+      # by {set_core_models}.
+      attr_reader :authorization_class
+      # The class that currently represents authorization subjects in the
+      # system, as set by {set_core_models}.
+      attr_reader :person_class
+      # The class that curretly represents roles in the system, as set by
+      # {set_core_models}.
+      attr_reader :role_class
+      # Classes that are marked as authorizable resources using
+      # {Permit::Models::AuthorizableExtensions::AuthorizableClassMethods#permit_authorizable permit_authorizable}.
+      attr_reader :authorizable_classes
+
+      #def action_aliases; @@action_aliases; end
 
       # Indicates the response that PermitRules will take if no
       # authorizations match. If set to +:allow+ then a subject will be given
       # access unless denied. By default this is set to +:deny+
       #
       # @return the current default access.
-      def default_access; @@default_access; end
+      def default_access; @default_access; end
 
       # Sets the response that PermitRules will use when no rules match.
       #
       # @param [:allow, :deny] access the default response to use.
-      def default_access=(access); @@default_access = access; end
+      def default_access=(access); @default_access = access; end
 
       # The method to use to retrieve the current authorization subject when
       # rules are being evaluated. If nil, then the method will be inferred from
       # the subject set in the call to {set_core_models}.
       #
       # @return [Symbol, nil]
-      def controller_subject_method; @@controller_subject_method; end
+      def controller_subject_method; @controller_subject_method; end
 
       # Sets the name of the method to use to retrieve the current subject
       # while checking authorizations. Set to nil, to infer the value from the
@@ -93,7 +104,7 @@ module Permit
       # authorizations are not being used.
       #
       # @param [nil, Symbol] method a symbol representing the method to use.
-      def controller_subject_method=(method); @@controller_subject_method = method; end
+      def controller_subject_method=(method); @controller_subject_method = method; end
 
       # Sets the core authorization, person, and role models to be used for
       # named authorizations, and configures them with their respective permit_*
@@ -108,13 +119,13 @@ module Permit
       def set_core_models(authorization, person, role)
         #raise PermitConfigurationError, "Core models cannot be redefined." if @@models_defined
 
-        @@authorization_class = authorization
-        @@person_class = person
-        @@role_class = role
+        @authorization_class = authorization
+        @person_class = person
+        @role_class = role
 
-        @@authorization_class.send :permit_authorization
-        @@person_class.send :permit_person
-        @@role_class.send :permit_role
+        @authorization_class.send :permit_authorization
+        @person_class.send :permit_person
+        @role_class.send :permit_role
       end
 
       # Forces Permit to reload its core classes based off of those given in the
