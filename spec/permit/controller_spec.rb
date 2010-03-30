@@ -37,12 +37,12 @@ module Permit::Specs
       authorized?(roles, resource)
     end
 
-    def pub_allowed?(roles, options = {})
-      allowed?(roles, options)
+    def pub_allowed?(*args)
+      allowed?(*args)
     end
 
-    def pub_denied?(roles, options = {})
-      denied?(roles, options)
+    def pub_denied?(*args)
+      denied?(*args)
     end
   end
 
@@ -212,62 +212,102 @@ module Permit::Specs
       end
 
       describe "#allowed?" do
-        it "should properly build the rule" do
-          controller.stub!(:current_person).and_return(Guest.new)
-          rule = PermitRule.new :admin, :on => :team
-          PermitRule.should_receive(:new).with(:admin, hash_including(:on => :team)).and_return(rule)
-          controller.pub_allowed?(:admin, :on => :team)
+        context "for a rule" do
+          it "should properly build the rule" do
+            controller.stub!(:current_person).and_return(Guest.new)
+            rule = PermitRule.new :admin, :on => :team
+            PermitRule.should_receive(:new).with(:admin, hash_including(:on => :team)).and_return(rule)
+            controller.pub_allowed?(:admin, :on => :team)
+          end
+
+          it "should properly call #matches? on the rule" do
+            bob = Person.create! :name => 'bob'
+            controller.stub!(:current_person).and_return(bob)
+            rule = PermitRule.new :guest
+            rule.should_receive(:matches?).with(bob, instance_of(Binding))
+            PermitRule.stub!(:new).and_return(rule)
+            controller.pub_allowed?(:guest)
+          end
+
+          it "should return the result of the rule match" do
+            controller.stub!(:current_person).and_return(Guest.new)
+            rule = PermitRule.new :guest
+            PermitRule.stub!(:new).and_return(rule)
+
+            rule.stub!(:matches?).and_return(true)
+            controller.pub_allowed?(:guest).should be_true
+
+            rule.stub!(:matches?).and_return(false)
+            controller.pub_allowed?(:guest).should be_false
+          end
         end
 
-        it "should properly call #matches? on the rule" do
-          bob = Person.create! :name => 'bob'
-          controller.stub!(:current_person).and_return(bob)
-          rule = PermitRule.new :guest
-          rule.should_receive(:matches?).with(bob, instance_of(Binding))
-          PermitRule.stub!(:new).and_return(rule)
-          controller.pub_allowed?(:guest)
+        context "for an action on the current controller" do
+          it "should evaluate the rules for the action on the current controller" do
+            guest = Guest.new
+            controller.stub!(:current_person).and_return(guest)
+            ProjectsController.permit_rules.should_receive(:permitted?).with(guest, :show, instance_of(Binding)).and_return(true)
+            controller.pub_allowed?(:action => :show).should be_true
+          end
         end
 
-        it "should return the result of the rule match" do
-          controller.stub!(:current_person).and_return(Guest.new)
-          rule = PermitRule.new :guest
-          PermitRule.stub!(:new).and_return(rule)
-
-          rule.stub!(:matches?).and_return(true)
-          controller.pub_allowed?(:guest).should be_true
-          
-          rule.stub!(:matches?).and_return(false)
-          controller.pub_allowed?(:guest).should be_false
+        context "for an action on a different controller" do
+          it "should evaluate the rules for the action on the given controller" do
+            guest = Guest.new
+            controller.stub!(:current_person).and_return(guest)
+            TeamsController.permit_rules.should_receive(:permitted?).with(guest, :index, instance_of(Binding)).and_return(true)
+            controller.pub_allowed?(:controller => 'permit/specs/teams', :action => :index).should be_true
+          end
         end
       end
 
       describe "#denied?" do
-        it "should properly build the rule" do
-          controller.stub!(:current_person).and_return(Guest.new)
-          rule = PermitRule.new :admin, :on => :team
-          PermitRule.should_receive(:new).with(:admin, hash_including(:on => :team)).and_return(rule)
-          controller.pub_denied?(:admin, :on => :team)
+        context "for a rule" do
+          it "should properly build the rule" do
+            controller.stub!(:current_person).and_return(Guest.new)
+            rule = PermitRule.new :admin, :on => :team
+            PermitRule.should_receive(:new).with(:admin, hash_including(:on => :team)).and_return(rule)
+            controller.pub_denied?(:admin, :on => :team)
+          end
+
+          it "should properly call #matches? on the rule" do
+            bob = Person.create! :name => 'bob'
+            controller.stub!(:current_person).and_return(bob)
+            rule = PermitRule.new :guest
+            rule.should_receive(:matches?).with(bob, instance_of(Binding))
+            PermitRule.stub!(:new).and_return(rule)
+            controller.pub_denied?(:guest)
+          end
+
+          it "should return the opposite of the rule match" do
+            controller.stub!(:current_person).and_return(Guest.new)
+            rule = PermitRule.new :guest
+            PermitRule.stub!(:new).and_return(rule)
+
+            rule.stub!(:matches?).and_return(true)
+            controller.pub_denied?(:guest).should be_false
+
+            rule.stub!(:matches?).and_return(false)
+            controller.pub_denied?(:guest).should be_true
+          end
         end
 
-        it "should properly call #matches? on the rule" do
-          bob = Person.create! :name => 'bob'
-          controller.stub!(:current_person).and_return(bob)
-          rule = PermitRule.new :guest
-          rule.should_receive(:matches?).with(bob, instance_of(Binding))
-          PermitRule.stub!(:new).and_return(rule)
-          controller.pub_denied?(:guest)
+        context "for an action on the current controller" do
+          it "should evaluate the rules for the action on the current controller" do
+            guest = Guest.new
+            controller.stub!(:current_person).and_return(guest)
+            ProjectsController.permit_rules.should_receive(:permitted?).with(guest, :show, instance_of(Binding)).and_return(true)
+            controller.pub_denied?(:action => :show).should be_false
+          end
         end
 
-        it "should return the opposite of the rule match" do
-          controller.stub!(:current_person).and_return(Guest.new)
-          rule = PermitRule.new :guest
-          PermitRule.stub!(:new).and_return(rule)
-
-          rule.stub!(:matches?).and_return(true)
-          controller.pub_denied?(:guest).should be_false
-          
-          rule.stub!(:matches?).and_return(false)
-          controller.pub_denied?(:guest).should be_true
+        context "for an action on a different controller" do
+          it "should evaluate the rules for the action on the given controller" do
+            guest = Guest.new
+            controller.stub!(:current_person).and_return(guest)
+            TeamsController.permit_rules.should_receive(:permitted?).with(guest, :index, instance_of(Binding)).and_return(true)
+            controller.pub_denied?(:controller => 'permit/specs/teams', :action => :index).should be_false
+          end
         end
       end
     end

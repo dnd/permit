@@ -80,27 +80,78 @@ module Permit
         true
       end
 
-      # Creates a PermitRule with the arguments that are given, and attempts to 
-      # match it based on the current person and binding context.
+      # Determines if a person is allowed access by evaluating rules for a 
+      # controller/action, or for a custom rule.
       #
-      # For information on the parameters for this method see 
-      # {PermitRule#initialize}.
+      # @overload allowed?(roles, options = {}) 
+      #   Creates a PermitRule with the arguments that are given, and attempts 
+      #   to match it based on the current subject and binding context.
       #
-      # @return [Boolean] true if the rule matches, otherwise false.
-      def allowed?(roles, options = {})
-        rule = PermitRule.new roles, options
-        rule.matches? permit_authorization_subject, binding
+      #   For information on the parameters for this method see 
+      #   {PermitRule#initialize}.
+      #
+      #   @return [Boolean] true if the rule matches, otherwise false.
+      #
+      # @overload allowed?(options)
+      #   Attempts to evaluate the rules for the given action against the 
+      #   specified controller using the current subject, and binding context.
+      #
+      #   Keep in mind that the evaluation is performed using the binding of the 
+      #   current controller. Any instance variables that may normally be needed 
+      #   for the rules on another controller need to exist in the current 
+      #   controller.
+      #
+      #   @param [Hash] options the controller/action to evaluate rules for.
+      #   @option options [String, Symbol] controller the name of the controller to 
+      #     evaluate the rules from. If this is not given then the current 
+      #     controller is used. You may use the string syntax 'namespaced/teams' 
+      #     for a namespaced controller Namespaced::TeamsController.
+      #   @option options [Symbol] action the action to evaluate rules for.
+      #
+      #   @return [Boolean] true if the rule matches, otherwise false.
+      def allowed?(*args)
+        options = args.extract_options!
+        if options.has_key? :action
+          name = options[:controller]
+          klass = (name ? "#{name}_controller".camelize.constantize : self)
+          klass.permit_rules.permitted? permit_authorization_subject, options[:action], binding
+        else
+          rule = PermitRule.new args[0], options
+          rule.matches? permit_authorization_subject, binding
+        end
       end
 
-      # Creates a PermitRule with the arguments that are given, and attempts to 
-      # match it based on the current person and binding context.
+      # Determines if a person is denied access by evaluating rules for a 
+      # controller/action, or for a custom rule.
       #
-      # For information on the parameters for this method see 
-      # {PermitRule#initialize}.
+      # @overload denied?(roles, options = {}) 
+      #   Creates a PermitRule with the arguments that are given, and attempts 
+      #   to match it based on the current subject and binding context.
       #
-      # @return [Boolean] true if the rule does not match, otherwise false.
-      def denied?(roles, options = {})
-        !allowed? roles, options
+      #   For information on the parameters for this method see 
+      #   {PermitRule#initialize}.
+      #
+      #   @return [Boolean] true if the rule does not match, otherwise false.
+      #
+      # @overload denied?(options)
+      #   Attempts to evaluate the rules for the given action against the 
+      #   specified controller using the current subject, and binding context.
+      #
+      #   Keep in mind that the evaluation is performed using the binding of the 
+      #   current controller. Any instance variables that may normally be needed 
+      #   for the rules on another controller need to exist in the current 
+      #   controller.
+      #
+      #   @param [Hash] options the controller/action to evaluate rules for.
+      #   @option options [String, Symbol] controller the name of the controller to 
+      #     evaluate the rules from. If this is not given then the current 
+      #     controller is used. You may use the string syntax 'namespaced/teams' 
+      #     for a namespaced controller Namespaced::TeamsController.
+      #   @option options [Symbol] action the action to evaluate rules for.
+      #
+      #   @return [Boolean] true if the subject is denied, otherwise false.
+      def denied?(*args)
+        !allowed? *args
       end
 
       # Shortcut for +current_person#authorized?+. If the current person is a 
