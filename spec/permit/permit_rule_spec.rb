@@ -191,6 +191,15 @@ module Permit::Specs
         end
       end
 
+      context "when the target resource does not exist" do
+        it "should raise an error" do
+          rule = allow_person_rule :who => :is_owner, :on => :oops
+          lambda {
+            rule.matches? @person, binding
+          }.should raise_error(PermitEvaluationError, "Target resource '@oops' did not exist in the given context.")
+        end
+      end
+
       context "using an is_* method" do
         before {@rule = allow_person_rule :who => :is_owner, :on => :team}
 
@@ -370,6 +379,15 @@ module Permit::Specs
           r = allow_rule :roles => :monkey_tech, :of => :maintenance
           r.matches?(@bob, binding).should be_false
         end
+        
+        context "that does not exist" do
+          it "should raise an error" do
+            rule = allow_rule :roles => :site_admin, :of => :oops
+            lambda {
+              rule.matches? @bob, binding
+            }.should raise_error(PermitEvaluationError, "Target resource '@oops' did not exist in the given context.")
+          end
+        end
       end
 
       context "without a resource" do
@@ -421,6 +439,15 @@ module Permit::Specs
         it "should return false if the person is not authorized for any of the roles and resource" do
           r = allow_rule :roles => [:site_admin, :monkey_tech], :of => :maintenance
           r.matches?(@bob, binding).should be_false
+        end
+
+        context "that does not exist" do
+          it "should raise an error" do
+            rule = allow_rule :roles => [:site_admin, :team_lead], :of => :oops
+            lambda {
+              rule.matches? @bob, binding
+            }.should raise_error(PermitEvaluationError, "Target resource '@oops' did not exist in the given context.")
+          end
         end
       end
 
