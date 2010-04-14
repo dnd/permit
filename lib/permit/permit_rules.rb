@@ -1,4 +1,5 @@
 module Permit
+  # Collection of PermitRule objects defining authorization.
   class PermitRules
     include Permit::Support
 
@@ -44,20 +45,24 @@ module Permit
     #
     # @example Allow a person that is a member of a team to show
     #   allow :person, :who => :is_member, :of => :team, :to => :show
+    # @example Allow a person that is a member of any of the teams to index.
+    #   allow :person, :who => :is_member, :of => [:team1, :team2], :to => :index
     # @example Allow a person with either of the named roles for a resource to perform any "write" operations.
     #   allow [:project_admin, :project_manager], :of => :project, :to => :write
+    # @example Allow a person with the viewer role of either of the projects to show.
+    #   allow :viewer, :of => [:project1, :project2], :to => :show
     #
     # @param [Symbol, <Symbol>] roles the role(s) that the rule will apply to.
     # @param [Hash] options the options used to build the rule.
     # @option options [Symbol] :who the method to call on the target resource.
     # @option options [Symbol] :that alias for :who
-    # @option options [Symbol] :of the name of the instance variable holding the target 
+    # @option options [Symbol, nil, :any, <Symbol, nil>] :of the name of the instance variable holding the target 
     #   resource. If set to +:any+ then the match will apply to a person that has 
     #   a matching role authorization for any resource. If not given, or set to 
     #   +nil+, then the match will apply to a person that has a matching role 
     #   authorization for a nil resource. +:any/nil+ functionality only applies 
     #   when using named roles. (see Permit::NamedRoles).
-    # @option options [Symbol] :on alias for +:of+
+    # @option options [Symbol, nil, :any, <Symbol, nil>] :on alias for +:of+
     # @option options [Symbol, <Symbol>] :to the action(s) to allow access to if this 
     #   rule matches. +:all+ may be given to indicate that access is given to all 
     #   actions if the rule matches. Actions will be expanded using the aliases

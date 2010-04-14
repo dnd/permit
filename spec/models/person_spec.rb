@@ -14,6 +14,7 @@ module Permit::Specs
           @tom = Person.create :name => "tom"
           @hotness = Project.create(:name => "hotness")
           @maintenance = Project.create(:name => "maintenance")
+          @project_x = Project.create!(:name => "project x")
           Role.create :key => :site_admin, :name => 'site admin', :authorize_resource => false, :requires_resource => false
           new_authz @bob, :site_admin, nil
           new_authz @bob, :admin, @maintenance
@@ -23,45 +24,119 @@ module Permit::Specs
           new_authz @tom, :admin, @hotness
         end
 
-        context "#authorized?" do
-          it "should return true if the person has any of the roles for the resource" do
-            @bob.should be_authorized(:admin, @maintenance)
+        describe "#authorized?" do
+          context "for one resource" do
+            it "should return true if the person has any of the roles for the resource" do
+              @bob.should be_authorized([:admin, :team_lead], @maintenance)
+            end
+
+            it "should return true if the person has any of the resources for the passed in Role object" do
+              r = Role.find_by_key 'admin'
+              @bob.should be_authorized(r, @maintenance)
+            end
+
+            it "should return false if the person does not have any of the roles for the resource" do
+              @bob.should_not be_authorized(:admin, @hotness)
+            end
+
+            it "should return false for a role that doesn't exist" do
+              @bob.should_not be_authorized(:lead_monkey_tech, @maintenance)
+            end
+
+            it "should return true if the person has a nil resource authorization for a role" do
+              @bob.should be_authorized(:site_admin, nil)
+            end
           end
 
-          it "should return true if the person has any of the resources for the passed in Role object" do
-            r = Role.find_by_key 'admin'
-            @bob.should be_authorized(r, @maintenance)
+          context "for multiple resources" do
+            it "should return true if the person has any of the roles for the resources" do
+              @bob.should be_authorized([:admin, :team_lead], [@maintenance, @project_x])
+            end
+
+            it "should return true if the person has any of the resources for the passed in Role object" do
+              r = Role.find_by_key 'admin'
+              @bob.should be_authorized(r, [@maintenance, @hotness])
+            end
+
+            it "should return false if the person does not have any of the roles for the resources" do
+              @bob.should_not be_authorized(:admin, [@hotness, @project_x])
+            end
+
+            it "should return false for a role that doesn't exist" do
+              @bob.should_not be_authorized(:lead_monkey_tech, [@maintenance, @hotness])
+            end
+
+            it "should return true if the person has a nil resource authorization for a role" do
+              @bob.should be_authorized(:site_admin, [nil, @project_x])
+            end
           end
 
-          it "should return false if the person does not have any of the roles for the resource" do
-            @bob.should_not be_authorized(:admin, @hotness)
-          end
+          context "for any resource" do
+            it "should return true if the person has any of the roles for any resource" do
+              @bob.should be_authorized([:admin, :team_lead], :any)
+            end
 
-          it "should return false for a role that doesn't exist" do
-            @bob.should_not be_authorized(:lead_monkey_tech, @maintenance)
-          end
-
-          it "should return true if the person has a nil resource authorization for a role" do
-            @bob.should be_authorized(:site_admin, nil)
+            it "should return false if the person does not have any of the roles for any resources" do
+              @tom.should_not be_authorized([:team_lead, :monkey_tech], :any)
+            end
           end
         end
 
-        context "#authorized_all?" do
-          it "should return true if the person matches all of the roles for the resource" do
-            @bob.should be_authorized_all([:admin, :developer], @maintenance)
+        describe "#authorized_all?" do
+          context "for one resource" do
+            it "should return true if the person matches all of the roles for the resource" do
+              @bob.should be_authorized_all([:admin, :developer], @maintenance)
+            end
+
+            it "should return true if the person matches all of the roles for the resource when a Role object is passed" do
+              r = Role.find_by_key 'developer'
+              @bob.should be_authorized_all([r, :admin], @maintenance)
+            end
+
+            it "should return false if the person does not match all of the roles for the resource" do
+              @tom.should_not be_authorized_all([:admin, :team_lead], @hotness)
+            end
+
+            it "should return false if one of the roles does not exist" do
+              @tom.should_not be_authorized_all([:admin, :slinky_analyst], @hotness)
+            end
           end
 
-          it "should return true if the person matches all of the roles for the resource when a Role object is passed" do
-            r = Role.find_by_key 'developer'
-            @bob.should be_authorized_all([r, :admin], @maintenance)
+          context "for multiple resources" do
+            it "should return true if the person matches all of the roles for the resource" do
+              @bob.authorize([:admin, :developer], @project_x)
+              @bob.should be_authorized_all([:admin, :developer], [@maintenance, @project_x])
+            end
+
+            it "should return true if the person matches all of the roles for the resource when a Role object is passed" do
+              @bob.authorize([:admin, :developer], @project_x)
+              r = Role.find_by_key 'developer'
+              @bob.should be_authorized_all([r, :admin], [@maintenance, @project_x])
+            end
+
+            it "should return false if the person does not match all of the roles for the resource" do
+              @tom.should_not be_authorized_all([:admin, :team_lead], @hotness)
+            end
+
+            it "should return false if the person does not match all of the roles for the resources" do
+              @bob.authorize :admin, @project_x
+              @bob.should_not be_authorized_all([:admin, :developer], [@maintenance, @project_x])
+            end
+
+            it "should return false if one of the roles does not exist" do
+              @tom.should_not be_authorized_all([:admin, :slinky_analyst], [@hotness, @maintenance])
+            end
           end
 
-          it "should return false if the person does not match all of the roles for the resource" do
-            @tom.should_not be_authorized_all([:admin, :team_lead], @hotness)
-          end
+          context "for any resource" do
+            it "should return true if the person has all of the roles for any resource" do
+              @bob.authorize :admin, @project_x
+              @bob.should be_authorized_all([:admin, :team_lead], :any)
+            end
 
-          it "should return false if one of the roles does not exist" do
-            @tom.should_not be_authorized_all([:admin, :slinky_analyst], @hotness)
+            it "should return false if the person does not have all of the roles for any resource" do
+              @tom.should_not be_authorized_all([:admin, :team_lead], :any)
+            end
           end
         end
       end
@@ -223,20 +298,23 @@ module Permit::Specs
           new_authz @tom, :admin, @hotness
         end
 
-        it "#authorizations.roles_for should return the roles the current person has for the resource" do
-          roles = @bob.authorizations.roles_for @maintenance
-          roles.should have(2).items
+        it "#authorizations.roles_for should return the roles the current person has for the resources" do
+          roles = @bob.authorizations.roles_for [@maintenance, @hotness]
+          roles.should have(3).items
           roles[0].key.should == 'admin'
           roles[1].key.should == 'developer'
+          roles[2].key.should == 'team_lead'
         end
 
-        it "#authorizations.for should return the authorizations the current person has for the resource" do
-          authz = @bob.authorizations.for @maintenance
-          authz.should have(2).items
+        it "#authorizations.for should return the authorizations the current person has for the resources" do
+          authz = @bob.authorizations.for [@maintenance, @hotness]
+          authz.should have(3).items
           authz[0].role.key.should == 'admin'
           authz[0].resource.should == @maintenance
           authz[1].role.key.should == 'developer'
           authz[1].resource.should == @maintenance
+          authz[2].role.key.should == 'team_lead'
+          authz[2].resource.should == @hotness
         end
       end
 

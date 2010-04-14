@@ -62,17 +62,17 @@ module Permit::Specs
 
       it "should store accept the resource through :of" do
         r = allow_rule :of => :team
-        r.target_var.should == :team
+        r.target_vars.should == [:team]
       end
 
       it "should accept the resource through :on" do
         r = allow_rule :on => :project
-        r.target_var.should == :project
+        r.target_vars.should == [:project]
       end
 
       it "should not be modifiable" do
         r = allow_rule :on => :project
-        lambda {r.target_var = :other}.should raise_error(NoMethodError)
+        lambda {r.target_vars << :other}.should raise_error(TypeError, "can't modify frozen array")
       end
     end
 
@@ -107,7 +107,7 @@ module Permit::Specs
 
         it "should accept the resource and method" do
           r = allow_person_rule :who => :is_member, :of => :team
-          r.target_var.should == :team
+          r.target_vars.should == [:team]
           r.method.should == :is_member
         end
       end
@@ -200,153 +200,335 @@ module Permit::Specs
         end
       end
 
-      context "using an is_* method" do
-        before {@rule = allow_person_rule :who => :is_owner, :on => :team}
+      context "with one resource" do
+        context "using an is_* method" do
+          before {@rule = allow_person_rule :who => :is_owner, :on => :team}
 
-        context "attempting #is_owner" do
-          it "should call #is_owner on the resource" do
+          context "attempting #is_owner" do
+            it "should call #is_owner on the resource" do
+              @team.should_receive(:is_owner).with(@person).and_return(true)
+              @rule.matches?(@person, binding)
+            end
+
+            it "should return the result of the resource call" do
+              @team.stub!(:is_owner).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team.stub!(:is_owner).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #is_owner?" do
+            it "should call #is_owner? on the resource" do
+              @team.should_receive(:is_owner?).with(@person).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the resource call" do
+              @team.stub!(:is_owner?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team.stub!(:is_owner?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owner?" do
+            it "should call #owner? on the resource" do
+              @team.should_receive(:owner?).with(@person).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should return the result of the resource call" do
+              @team.stub!(:owner?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team.stub!(:owner?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owner" do
+            it "should call #owner on the resource" do
+              @team.should_receive(:owner).and_return(@person)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the comparison of the resource call with the current person" do
+              @team.stub!(:owner).and_return(@person)
+              @rule.matches?(@person, binding).should be_true
+              jim = Person.create :name => 'jim'
+              @team.stub!(:owner).and_return(jim)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owners.exists?" do
+            it "should call #owners.exists? on the resource" do
+              owners = mock("owners")
+              owners.should_receive(:exists?).with(@person).and_return(true)
+              @team.stub!(:owners).and_return(owners)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the resource call" do
+              owners = mock("owners")
+              @team.stub!(:owners).and_return(owners)
+              owners.stub!(:exists?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              owners.stub!(:exists?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          it "should raise an error if none of the attempted calls responded" do
+            @team.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: is_owner, is_owner?, owner, owner?, owners")
+          end
+        end
+
+        context "using an is_*? method" do
+          before {@rule = allow_person_rule :who => :is_manager?, :on => :team}
+
+          context "attempting #is_manager?" do
+            it "should call #is_manager? on the resource" do
+              @team.should_receive(:is_manager?).with(@person).and_return(true)
+              @rule.matches?(@person, binding)
+            end
+
+            it "should return the result from the resource call" do
+              @team.stub!(:is_manager?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team.stub!(:is_manager?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should not call #manager? if resource responds to #is_manager?" do
+              @team.stub!(:is_manager?).and_return(true)
+              @team.should_not_receive(:manager?)
+              @rule.matches?(@person, binding)
+            end
+
+          end
+
+          context "attempting #manager?" do
+            it "should call #manager? on the resource" do
+              @team.should_receive(:manager?).with(@person).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should return the result from the resource call" do
+              @team.stub!(:manager?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team.stub!(:manager?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          it "should raise an error if none of the attempted calls responded" do
+            @team.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: is_manager?, manager?")
+          end
+        end
+
+        context "using any other method" do
+          before {@rule = allow_person_rule :who => :has_permission, :on => :team}
+          it "should call the method on the resource" do
+            @team.should_receive(:has_permission).with(@person)
+            @rule.matches?(@person, binding)
+          end
+
+          it "should raise an error if the attempted call did not respond" do
+            @team.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: has_permission")
+          end
+        end
+      end
+
+      context "with multiple resources" do
+        context "using an is_* method" do
+          before do
+            @team2 = Team.new
+            @team.stub!(:is_owner).and_return(false)
+            @rule = allow_person_rule :who => :is_owner, :on => [:team, :team2]
+          end
+
+          it "should attempt to call the first resource first" do
+            @team2.should_not_receive(:is_owner)
             @team.should_receive(:is_owner).with(@person).and_return(true)
             @rule.matches?(@person, binding)
           end
 
-          it "should return the result of the resource call" do
-            @team.stub!(:is_owner).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            @team.stub!(:is_owner).and_return(false)
-            @rule.matches?(@person, binding).should be_false
+          context "attempting #is_owner" do
+            it "should call #is_owner on the resource" do
+              @team2.should_receive(:is_owner).with(@person).and_return(true)
+              @rule.matches?(@person, binding)
+            end
+
+            it "should return the result of the resource call" do
+              @team2.stub!(:is_owner).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team2.stub!(:is_owner).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #is_owner?" do
+            it "should call #is_owner? on the resource" do
+              @team2.should_receive(:is_owner?).with(@person).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the resource call" do
+              @team2.stub!(:is_owner?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team2.stub!(:is_owner?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owner?" do
+            it "should call #owner? on the resource" do
+              @team2.should_receive(:owner?).with(@person).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should return the result of the resource call" do
+              @team2.stub!(:owner?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team2.stub!(:owner?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owner" do
+            it "should call #owner on the resource" do
+              @team2.should_receive(:owner).and_return(@person)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the comparison of the resource call with the current person" do
+              @team2.stub!(:owner).and_return(@person)
+              @rule.matches?(@person, binding).should be_true
+              jim = Person.create :name => 'jim'
+              @team2.stub!(:owner).and_return(jim)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          context "attempting #owners.exists?" do
+            it "should call #owners.exists? on the resource" do
+              owners = mock("owners")
+              owners.should_receive(:exists?).with(@person).and_return(true)
+              @team2.stub!(:owners).and_return(owners)
+              @rule.matches?(@person, binding).should be_true
+            end
+
+            it "should return the result of the resource call" do
+              owners = mock("owners")
+              @team2.stub!(:owners).and_return(owners)
+              owners.stub!(:exists?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              owners.stub!(:exists?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          it "should raise an error if none of the attempted calls responded" do
+            @team2.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team2' evaluated as #{@team2.inspect} did not respond to any of the following: is_owner, is_owner?, owner, owner?, owners")
           end
         end
 
-        context "attempting #is_owner?" do
-          it "should call #is_owner? on the resource" do
-            @team.should_receive(:is_owner?).with(@person).and_return(true)
-            @rule.matches?(@person, binding).should be_true
+        context "using an is_*? method" do
+          before do
+            @team2 = Team.new
+            @team.stub!(:is_manager?).and_return(false)
+            @rule = allow_person_rule :who => :is_manager?, :on => [:team, :team2]
           end
 
-          it "should return the result of the resource call" do
-            @team.stub!(:is_owner?).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            @team.stub!(:is_owner?).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-        end
-
-        context "attempting #owner?" do
-          it "should call #owner? on the resource" do
-            @team.should_receive(:owner?).with(@person).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-
-          it "should return the result of the resource call" do
-            @team.stub!(:owner?).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            @team.stub!(:owner?).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-        end
-
-        context "attempting #owner" do
-          it "should call #owner on the resource" do
-            @team.should_receive(:owner).and_return(@person)
-            @rule.matches?(@person, binding).should be_true
-          end
-
-          it "should return the result of the comparison of the resource call with the current person" do
-            @team.stub!(:owner).and_return(@person)
-            @rule.matches?(@person, binding).should be_true
-            jim = Person.create :name => 'jim'
-            @team.stub!(:owner).and_return(jim)
-            @rule.matches?(@person, binding).should be_false
-          end
-        end
-
-        context "attempting #owners.exists?" do
-          it "should call #owners.exists? on the resource" do
-            owners = mock("owners")
-            owners.should_receive(:exists?).with(@person).and_return(true)
-            @team.stub!(:owners).and_return(owners)
-            @rule.matches?(@person, binding).should be_true
-          end
-
-          it "should return the result of the resource call" do
-            owners = mock("owners")
-            @team.stub!(:owners).and_return(owners)
-            owners.stub!(:exists?).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            owners.stub!(:exists?).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-        end
-
-        it "should raise an error if none of the attempted calls responded" do
-          @team.stub!(:respond_to?).and_return(false)
-          lambda { 
-            @rule.matches?(@person, binding)
-          }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: is_owner, is_owner?, owner, owner?, owners")
-        end
-      end
-
-      context "using an is_*? method" do
-        before {@rule = allow_person_rule :who => :is_manager?, :on => :team}
-
-        context "attempting #is_manager?" do
-          it "should call #is_manager? on the resource" do
+          it "should attempt to call the first resource first" do
+            @team2.should_not_receive(:is_manager?)
             @team.should_receive(:is_manager?).with(@person).and_return(true)
             @rule.matches?(@person, binding)
           end
 
-          it "should return the result from the resource call" do
-            @team.stub!(:is_manager?).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            @team.stub!(:is_manager?).and_return(false)
-            @rule.matches?(@person, binding).should be_false
+          context "attempting #is_manager?" do
+            it "should call #is_manager? on the resource" do
+              @team2.should_receive(:is_manager?).with(@person).and_return(true)
+              @rule.matches?(@person, binding)
+            end
+
+            it "should return the result from the resource call" do
+              @team2.stub!(:is_manager?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team2.stub!(:is_manager?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should not call #manager? if resource responds to #is_manager?" do
+              @team2.stub!(:is_manager?).and_return(true)
+              @team2.should_not_receive(:manager?)
+              @rule.matches?(@person, binding)
+            end
+
           end
 
-          it "should not call #manager? if resource responds to #is_manager?" do
-            @team.stub!(:is_manager?).and_return(true)
-            @team.should_not_receive(:manager?)
+          context "attempting #manager?" do
+            it "should call #manager? on the resource" do
+              @team2.should_receive(:manager?).with(@person).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+
+            it "should return the result from the resource call" do
+              @team2.stub!(:manager?).and_return(true)
+              @rule.matches?(@person, binding).should be_true
+              @team2.stub!(:manager?).and_return(false)
+              @rule.matches?(@person, binding).should be_false
+            end
+          end
+
+          it "should raise an error if none of the attempted calls responded" do
+            @team2.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team2' evaluated as #{@team2.inspect} did not respond to any of the following: is_manager?, manager?")
+          end
+        end
+
+        context "using any other method" do
+          before {@rule = allow_person_rule :who => :has_permission, :on => :team}
+          before do
+            @team2 = Team.new
+            @team.stub!(:has_permission).and_return(false)
+            @rule = allow_person_rule :who => :has_permission, :on => [:team, :team2]
+          end
+
+          it "should attempt to call the first resource first" do
+            @team2.should_not_receive(:has_permission)
+            @team.should_receive(:has_permission).with(@person).and_return(true)
             @rule.matches?(@person, binding)
           end
 
-        end
-
-        context "attempting #manager?" do
-          it "should call #manager? on the resource" do
-            @team.should_receive(:manager?).with(@person).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-
-          it "should return the result from the resource call" do
-            @team.stub!(:manager?).and_return(true)
-            @rule.matches?(@person, binding).should be_true
-            @team.stub!(:manager?).and_return(false)
-            @rule.matches?(@person, binding).should be_false
-          end
-        end
-
-        it "should raise an error if none of the attempted calls responded" do
-          @team.stub!(:respond_to?).and_return(false)
-          lambda { 
+          it "should call the method on the resource" do
+            @team2.should_receive(:has_permission).with(@person)
             @rule.matches?(@person, binding)
-          }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: is_manager?, manager?")
+          end
+
+          it "should raise an error if the attempted call did not respond" do
+            @team2.stub!(:respond_to?).and_return(false)
+            lambda { 
+              @rule.matches?(@person, binding)
+            }.should raise_error(PermitEvaluationError,  "Target object ':team2' evaluated as #{@team.inspect} did not respond to any of the following: has_permission")
+          end
         end
       end
-
-      context "using any other method" do
-        before {@rule = allow_person_rule :who => :has_permission, :on => :team}
-        it "should call the method on the resource" do
-          @team.should_receive(:has_permission).with(@person)
-          @rule.matches?(@person, binding)
-        end
-
-        it "should raise an error if the attempted call did not respond" do
-          @team.stub!(:respond_to?).and_return(false)
-          lambda { 
-            @rule.matches?(@person, binding)
-          }.should raise_error(PermitEvaluationError,  "Target object ':team' evaluated as #{@team.inspect} did not respond to any of the following: has_permission")
-        end
-      end
-
     end
 
     context "for a named authorization" do
@@ -413,6 +595,18 @@ module Permit::Specs
           r.matches?(@tom, binding).should be_false
         end
       end
+
+      context "with multiple resources" do
+        it "should return true if the person is authorized for one of the resources" do
+          r = allow_rule :roles => :admin, :of => [:hotness, :maintenance]
+          r.matches?(@bob, binding).should be_true
+        end
+
+        it "should return false if the person is not authorized for any of the resources" do
+          r = allow_rule :roles => :developer, :of => [:hotness, :maintenance]
+          r.matches?(@tom, binding).should be_false
+        end
+      end
     end
 
     context "for multiple named authorizations" do
@@ -471,6 +665,18 @@ module Permit::Specs
 
         it "should return false if the person is not authorized for any of the roles and a resource" do
           r = allow_rule :roles => [:developer, :site_admin], :of => :any
+          r.matches?(@tom, binding).should be_false
+        end
+      end
+
+      context "with multiple resources" do
+        it "should return true if the person is authorized for one of the resources" do
+          r = allow_rule :roles => [:developer, :site_admin], :of => [:hotness, :maintenance]
+          r.matches?(@bob, binding).should be_true
+        end
+
+        it "should return false if the person is not authorized for any of the resources" do
+          r = allow_rule :roles => [:admin, :site_admin], :of => [nil, :maintenance]
           r.matches?(@tom, binding).should be_false
         end
       end

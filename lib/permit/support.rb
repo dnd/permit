@@ -32,28 +32,49 @@ module Permit
     end
 
     protected
-    def authorization_conditions(role, resource, person = nil)
-      conditions = {}
-      conditions[Permit::Config.person_class.name.foreign_key] = person.id if person
-      conditions.merge! role_condition(role)
-      conditions.merge! resource_conditions(resource)
+    def authorization_conditions(roles, resources, person = nil)
+      params = {}
+      query = []
+      if person
+        query << "#{Permit::Config.person_class.name.foreign_key} = :person_id"
+        params[:person_id] = person.id
+      end
+      query << role_condition(roles, params)
+      query << resource_conditions(resources, params)
+
+      [query.compact.join(" AND "), params]
     end
 
-    def role_condition(roles)
-      return {} unless roles
+    def role_condition(roles, params = {})
+      return nil unless roles
 
       r = get_roles(roles)
       ids = r.collect {|role| role.id}
 
-      return (ids.empty? ? {} : {Permit::Config.role_class.name.foreign_key => ids})
+      if ids.empty?
+        return nil
+      else
+        params[:role_ids] = ids
+        "#{Permit::Config.role_class.name.foreign_key} in (:role_ids)"
+      end
     end
 
-    def resource_conditions(resource)
-      case resource
-      when :any then {}
-      when nil then {:resource_type => nil, :resource_id => nil}
-      else {:resource_type => resource.class.resource_type, :resource_id => resource.id}
+    def resource_conditions(resources, params = {})
+      constraints = []
+      permit_arrayify(resources).each_with_index do |resource, idx|
+        type, id = case resource
+        when :any then return nil
+        when nil then [nil, nil]
+        else [resource.class.resource_type, resource.id]
+        end
+
+        type_key = "resource_type_#{idx}".to_sym
+        id_key = "resource_id_#{idx}".to_sym
+        params.merge! type_key => type, id_key => id
+        op = type.nil? ? 'is' : '='
+        constraints << "(resource_type #{op} #{type_key.inspect} AND resource_id #{op} #{id_key.inspect})"
       end
+      return "(" << constraints.join(" OR ") << ")"
     end
 
     def get_role(role)

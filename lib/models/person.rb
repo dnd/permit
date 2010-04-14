@@ -24,15 +24,15 @@ module Permit
         #
         # @param [Role, String, Symbol, <Role, String, Symbol>] roles the roles 
         #   to check for authorization on.
-        # @param [Authorizable, nil, :any] resource the resource to check for 
+        # @param [Authorizable, nil, :any, <Authorizable, nil>] resources the resources to check for 
         #   authorization on.
         # @return [true, false] true if the person is authorized on any of the a  
         #   roles, false otherwise.
-        def authorized?(roles, resource)
+        def authorized?(roles, resources)
           permit_arrayify(roles).each do |r|
             role = get_role(r)
             next unless role
-            conditions = authorization_conditions(role, resource)
+            conditions = authorization_conditions(role, resources)
             return true if permit_authorizations_proxy.exists?(conditions)
           end
           return false
@@ -43,16 +43,22 @@ module Permit
         #
         # @param [permit_role, String, Symbol, <permit_role, String, Symbol>] 
         #   roles the roles to check for authorization on.
-        # @param [permit_authorizable, nil, :any] resource the resource to check for 
+        # @param [permit_authorizable, nil, :any, <permit_authorizable, nil>] resources the resources to check for 
         #   authorization on.
         # @return [true, false] true if the person is authorized on all of the a  
         #   roles, false otherwise.
-        def authorized_all?(roles, resource)
+        def authorized_all?(roles, resources)
           permit_arrayify(roles).each do |r|
             role = get_role(r)
             return false unless role
-            conditions = authorization_conditions(role, resource)
-            return false unless permit_authorizations_proxy.exists?(conditions)
+            conditions = authorization_conditions(role, resources)
+            if resources == :any
+              # No idea how many authz they should have. As long as they have 
+              # something, that's good enough.
+              return false unless permit_authorizations_proxy.exists?(conditions)
+            else
+              return false unless permit_authorizations_proxy.count(:conditions => conditions) == permit_arrayify(resources).size
+            end
           end
           return true
         end

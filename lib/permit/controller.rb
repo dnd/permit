@@ -159,8 +159,8 @@ module Permit
       # 
       # For information on the parameters for this method see 
       # {Permit::Models::PersonExtensions::PersonInstanceMethods#authorized?}
-      def authorized?(roles, resource)
-        permit_authorization_subject.guest? ? false : permit_authorization_subject.authorized?(roles, resource)
+      def authorized?(roles, resources)
+        permit_authorization_subject.guest? ? false : permit_authorization_subject.authorized?(roles, resources)
       end
 
     private

@@ -1,11 +1,12 @@
 module Permit
+  # Defines an authorization rule to match against.
   class PermitRule
     include Permit::Support
     
     VALID_OPTION_KEYS = [:who, :that, :of, :on, :if, :unless]
     BUILTIN_ROLES = [:person, :guest, :everyone]
 
-    attr_reader :roles, :target_var, :method, :if, :unless
+    attr_reader :roles, :target_vars, :method, :if, :unless
 
     # Creates a new PermitRule.
     #
@@ -35,8 +36,8 @@ module Permit
     #   +is_owner()+, +is_owner?()+, +owner()+, +owner+, +owners.exist?()+. If 
     #   this option is given +:of+/+:on+ must also be given.
     # @option options [Symbol] :that alias for +:who+
-    # @option options [Symbol] :of The name of the instance variable to use as 
-    #   the target resource.
+    # @option options [Symbol, nil, :any, <Symbol, nil>] :of The name of the 
+    #   instance variable(s) to use as the target resource(s).
     #
     #   In a dynamic authorization this is the object that will be tested using 
     #   the value of +:who+/+:that+.
@@ -46,7 +47,7 @@ module Permit
     #   indicate a match if the person has one of the roles for any resource. If 
     #   not given, or set to +nil+, then the match will apply to a person that 
     #   has a matching role authorization for a nil resource. 
-    # @option options [Symbol] :on alias for +:of+
+    # @option options [Symbol, nil, :any, <Symbol, nil>] :on alias for +:of+
     # @option options [Symbol, String, Proc] :if code to evaluate at the end of the 
     #   match if it is still valid. If it returns false, the rule will not match.
     # @option options [Symbol, String, Proc] :unless code to evaluate at the end 
@@ -62,7 +63,7 @@ module Permit
       validate_options options
 
       @method = options[:who] || options[:that]
-      @target_var = options[:of] || options[:on]
+      @target_vars = permit_arrayify(options[:of] || options[:on]).uniq.freeze
 
       @if = options[:if]
       @unless = options[:unless]
@@ -121,24 +122,36 @@ module Permit
 
     def has_named_authorizations?(person, context_binding)
       return false if person.guest?
-      resource = case @target_var
-                 when nil then nil
-                 when :any then :any
-                 else get_resource(context_binding)
-                 end
-      person.authorized? @roles, resource
+      resources = []
+      @target_vars.each do |var_name|
+        resources << case var_name
+          when nil then nil
+          when :any then (resources = :any and break)
+          else get_resource(var_name, context_binding)
+        end
+      end
+      person.authorized? @roles, resources
     end
 
     def has_dynamic_authorization?(person, context_binding)
       return false if person.guest?
-      return true if @target_var.nil?
 
-      resource = get_resource context_binding
       methods = determine_method_sequence @method
 
+      @target_vars.each do |var_name|
+        return true if var_name.nil?
+
+        resource = get_resource var_name, context_binding
+        return true if evaluate_dynamic_methods(var_name, resource, methods, person)
+      end
+
+      return false
+    end
+
+    def evaluate_dynamic_methods(var_name, resource, methods, person)
       methods.each do |name, type|
         next unless resource.respond_to? name
-        
+
         case type
         when :method then return resource.send name, person
         when :getter then return resource.send(name) == person
@@ -148,7 +161,7 @@ module Permit
       end
 
       # Target didn't respond to any attempts. This would be a problem.
-      raise PermitEvaluationError, "Target object ':#{@target_var}' evaluated as #{resource.inspect} did not respond to any of the following: #{methods.collect {|n,t| n}.join(', ')}"
+      raise PermitEvaluationError, "Target object ':#{var_name}' evaluated as #{resource.inspect} did not respond to any of the following: #{methods.collect {|n,t| n}.join(', ')}"
     end
 
     # is_owner - is_owner(), is_owner?(), owner?(), owner, owners.exists()
@@ -174,8 +187,8 @@ module Permit
       end      
     end
 
-    def get_resource(context_binding)
-      var_name = "@#{@target_var.to_s}"
+    def get_resource(var, context_binding)
+      var_name = "@#{var.to_s}"
       if eval(%Q{instance_variables.include? "#{var_name}"}, context_binding)
         eval var_name, context_binding
       else

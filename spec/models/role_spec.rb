@@ -101,6 +101,13 @@ module Permit::Specs
           people[1].should == @jack
         end
 
+        it "#authorizations.people_for should return the people authorized for the resources on the current role" do
+          people = @admin.authorizations.people_for [@maintenance, @hotness]
+          people.should have(2).items
+          people[0].should == @bob
+          people[1].should == @tom
+        end
+
         it "#authorizations.for should return the authorizations the current role has for the resource" do
           authz = @admin.authorizations.for @maintenance
           authz.should have(1).items
