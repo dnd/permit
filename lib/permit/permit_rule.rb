@@ -49,10 +49,13 @@ module Permit
     #   has a matching role authorization for a nil resource. 
     # @option options [Symbol, nil, :any, <Symbol, nil>] :on alias for +:of+
     # @option options [Symbol, String, Proc] :if code to evaluate at the end of the 
-    #   match if it is still valid. If it returns false, the rule will not match.
-    # @option options [Symbol, String, Proc] :unless code to evaluate at the end 
-    #   of the match if it is still valid. If it returns true, the rule will not 
-    #   match.
+    #   match if it is still valid. If it returns false, the rule will not 
+    #   match. If a proc if given, it will be passed the current subject and 
+    #   binding. A method will be called without any arguments.    
+    # @option options [Symbol, String, Proc] :unless code to evaluate at the end of 
+    #   the match if it is still valid. If it returns true, the rule will not 
+    #   match. If a proc if given, it will be passed the current subject and 
+    #   binding. A method will be called without any arguments.    
     #
     # @raise [PermitConfigurationError] if the rule options are invalid.
     def initialize(roles, options = {})
@@ -84,7 +87,7 @@ module Permit
         has_named_authorizations? person, context_binding
       end
 
-      passed_conditionals = matched ? passes_conditionals?(context_binding) : false
+      passed_conditionals = matched ? passes_conditionals?(person, context_binding) : false
       passed = matched && passed_conditionals
       return passed
     end
@@ -196,16 +199,16 @@ module Permit
       end
     end
 
-    def passes_conditionals?(context_binding)
-      return false unless eval_conditional @if, true, context_binding
-      return false if eval_conditional @unless, false, context_binding
+    def passes_conditionals?(person, context_binding)
+      return false unless eval_conditional @if, true, person, context_binding
+      return false if eval_conditional @unless, false, person, context_binding
       true
     end
 
-    def eval_conditional(condition, default, context_binding)
+    def eval_conditional(condition, default, person, context_binding)
       if condition
         condition = condition.to_s if Symbol===condition
-        return (String===condition ? eval(condition, context_binding) : condition.call)
+        return (String===condition ? eval(condition, context_binding) : condition.call(person, context_binding))
       else
         return default
       end

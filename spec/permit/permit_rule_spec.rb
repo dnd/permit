@@ -10,6 +10,14 @@ def allow_person_rule(options = {})
   allow_rule options
 end
 
+def true_conditional
+  true
+end
+
+def false_conditional
+  false
+end
+
 module Permit::Specs
   describe PermitRule, "initialization" do
     context "of roles" do
@@ -678,6 +686,78 @@ module Permit::Specs
         it "should return false if the person is not authorized for any of the resources" do
           r = allow_rule :roles => [:admin, :site_admin], :of => [nil, :maintenance]
           r.matches?(@tom, binding).should be_false
+        end
+      end
+    end
+
+    describe ":if condition" do
+      before {@guest = Guest.new}
+
+      context "for a proc" do
+        it "should properly call a proc" do
+          p = Proc.new {|person, b| return false}
+          p.should_receive(:call).with(@guest, instance_of(Binding))
+          r = allow_rule :roles => :everyone, :if => p
+
+          r.matches? @guest, binding
+        end
+
+        it "should not match when the condition is false" do
+          r = allow_rule :roles => :everyone, :if => Proc.new {|p,b| false}
+          r.matches?(@guest, binding).should be_false
+        end
+
+        it "should match when the condition is true" do
+          r = allow_rule :roles => :everyone, :if => Proc.new {|p,b| true}
+          r.matches?(@guest, binding).should be_true
+        end
+      end
+
+      context "for a method" do
+        it "should not match when the condition is false" do
+          r = allow_rule :roles => :everyone, :if => :false_conditional
+          r.matches?(@guest, binding).should be_false
+        end
+
+        it "should match when the condition is true" do
+          r = allow_rule :roles => :everyone, :if => :true_conditional
+          r.matches?(@guest, binding).should be_true
+        end
+      end
+    end
+
+    describe ":unless condition" do
+      before {@guest = Guest.new}
+
+      context "for a proc" do
+        it "should properly call a proc" do
+          p = Proc.new {|person, b| return false}
+          p.should_receive(:call).with(@guest, instance_of(Binding))
+          r = allow_rule :roles => :everyone, :unless => p
+
+          r.matches? @guest, binding
+        end
+
+        it "should not match when the condition is true" do
+          r = allow_rule :roles => :everyone, :unless => Proc.new {|p,b| true}
+          r.matches?(@guest, binding).should be_false
+        end
+
+        it "should match when the condition is false" do
+          r = allow_rule :roles => :everyone, :unless => Proc.new {|p,b| false}
+          r.matches?(@guest, binding).should be_true
+        end
+      end
+
+      context "for a method" do
+        it "should not match when the condition is true" do
+          r = allow_rule :roles => :everyone, :unless => :true_conditional
+          r.matches?(@guest, binding).should be_false
+        end
+
+        it "should match when the condition is false" do
+          r = allow_rule :roles => :everyone, :unless => :false_conditional
+          r.matches?(@guest, binding).should be_true
         end
       end
     end

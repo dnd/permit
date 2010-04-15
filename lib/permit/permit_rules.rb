@@ -63,6 +63,14 @@ module Permit
     #   authorization for a nil resource. +:any/nil+ functionality only applies 
     #   when using named roles. (see Permit::NamedRoles).
     # @option options [Symbol, nil, :any, <Symbol, nil>] :on alias for +:of+
+    # @option options [Symbol, String, Proc] :if code to evaluate at the end of the 
+    #   match if it is still valid. If it returns false, the rule will not 
+    #   match. If a proc if given, it will be passed the current subject and 
+    #   binding. A method will be called without any arguments.    
+    # @option options [Symbol, String, Proc] :unless code to evaluate at the end 
+    #   of the match if it is still valid. If it returns true, the rule will not 
+    #   match. If a proc if given, it will be passed the current subject and 
+    #   binding. A method will be called without any arguments.    
     # @option options [Symbol, <Symbol>] :to the action(s) to allow access to if this 
     #   rule matches. +:all+ may be given to indicate that access is given to all 
     #   actions if the rule matches. Actions will be expanded using the aliases
@@ -96,6 +104,14 @@ module Permit
     #   authorization for a nil resource. :any/nil functionality only applies 
     #   when using named roles. (see Permit::NamedRoles).
     # @option options [Symbol] :on alias for +:of+
+    # @option options [Symbol, String, Proc] :if code to evaluate at the end of the 
+    #   match if it is still valid. If it returns false, the rule will not 
+    #   match. The proc or method called, will be passed the current subject 
+    #   being matched, and the binding being used.
+    # @option options [Symbol, String, Proc] :unless code to evaluate at the end 
+    #   of the match if it is still valid. If it returns true, the rule will not 
+    #   match. The proc or method called, will be passed the current subject 
+    #   being matched, and the binding being used.
     # @option options [Symbol, <Symbol>] :from the action(s) to deny access to if this 
     #   rule matches. +:all+ may be given to indicate that access is denied to all 
     #   actions if the rule matches. Actions will be expanded using the aliases
