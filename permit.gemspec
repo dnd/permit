@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{permit}
-  s.version = "0.9.0"
+  s.version = "1.0.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Steve Valaitis"]
-  s.date = %q{2010-03-27}
+  s.date = %q{2010-04-14}
   s.email = %q{steve@digitalnothing.com}
   s.extra_rdoc_files = [
     "README.mkd"
@@ -60,7 +60,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/dnd/permit}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.5}
+  s.rubygems_version = %q{1.3.6}
   s.summary = %q{A flexible authorization plugin for Ruby on Rails.}
   s.test_files = [
     "spec/spec_helper.rb",
