@@ -192,7 +192,7 @@ module Permit
 
     def get_resource(var, context_binding)
       var_name = "@#{var.to_s}"
-      if eval(%Q{instance_variables.include? "#{var_name}"}, context_binding)
+      if eval(%Q{instance_variable_defined? :#{var_name}}, context_binding)
         eval var_name, context_binding
       else
         raise PermitEvaluationError, "Target resource '#{var_name}' did not exist in the given context."
