@@ -7,7 +7,7 @@ Description:
   alter any existing models, but will be used to generate the proper foreign-key 
   in the migration.
 
-  script/generate permit [Person [Authorization [Role]]]
+  rails generate permit [Person [Authorization [Role]]]
 
   If you don't want to use named authorizations, and only want to generate the 
   initializer pass in the --init-only option. You can optionally pass the name
@@ -15,10 +15,10 @@ Description:
   the name of the current_* method to use to retrieve the subject for
   authorization.
 
-  script/generate permit [Person] --init-only
+  rails generate permit [Person] --init-only
 
 Example:
-  script/generate permit
+  rails generate permit
 
   This will create:
     Model:       app/models/authorization.rb
@@ -26,7 +26,7 @@ Example:
     Migration:   db/migrate/xxx_create_permit_structure.rb
     Initializer: config/initializers/permit.rb
 
-  script/generate permit Employee Access Job
+  rails generate permit Employee Access Job
 
   This will create:
     Model:       app/models/access.rb
@@ -34,7 +34,7 @@ Example:
     Migration:   db/migrate/xxx_create_permit_structure.rb
     Initializer: config/initializers/permit.rb
 
-  script/generate permit --init-only
+  rails generate permit --init-only
 
   This will create:
     Initializer: config/initializers/permit.rb

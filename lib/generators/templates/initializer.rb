@@ -2,17 +2,17 @@
 # call is only required if you are using named authorizations, and may only be 
 # called once. If you are not using named authorizations you may leave this 
 # commented out.
-<%if options[:setup_named_roles] -%>
-Permit::Config.set_core_models(<%=authorization_class%>, <%=person_class%>, <%=role_class%>)
-<%else -%>
+<%if options['init-only'] -%>
 # Permit::Config.set_core_models(Authorization, Person, Role)
+<%else -%>
+Permit::Config.set_core_models(<%=authorization_class%>, <%=person_class%>, <%=role_class%>)
 <%end -%>
 
 # Sets the method to use for retrieving the current authorization subject. Leave
 # this nil and Permit will infer the method name(current_*) from the
 # authorization subject model name given to #set_core_models. If named
 # authorizations aren't being used then this will default to :current_person.
-<%if !options[:setup_named_roles] && person_class != 'Person' -%>
+<%if person_class != 'Person' -%>
 Permit::Config.controller_subject_method = :current_<%=person_class.underscore %>
 <%else -%>
 # Permit::Config.controller_subject_method = nil
