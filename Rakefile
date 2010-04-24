@@ -6,23 +6,20 @@ desc 'Default: run specs tests.'
 task :default => :spec
 
 begin
-  require 'spec'
-  require 'spec/rake/spectask'
+  require 'rspec/core'
+  require 'rspec/core/rake_task'
 
   desc 'Run all specs'
-  Spec::Rake::SpecTask.new 'spec' do |t|
-    t.spec_files = FileList['spec']
-    t.spec_opts = ["--colour"]
-  end
+  Rspec::Core::RakeTask.new 'spec'
 
   begin
     require 'rcov'
 
     desc 'Run all specs with rcov'
-    Spec::Rake::SpecTask.new 'rcov' do |t|
-      t.spec_files = FileList['spec']
+    Rspec::Core::RakeTask.new 'rcov' do |t|
+      #t.spec_files = FileList['spec']
       t.rcov = true
-      t.rcov_opts = ['--exclude', 'spec,app/,config/,rubygems/']
+      t.rcov_opts = ['--rails', '--exclude \(^lib\){0}']
     end
   rescue LoadError
     warn "RCov is not available. To run specs with coverage `gem install rcov`."
@@ -45,7 +42,7 @@ begin
 
   desc 'Generate YARDocs'
   YARD::Rake::YardocTask.new do |t|
-    t.files   = ['lib/**/*.rb']
+    t.files   = ['lib/models/**/*.rb', 'lib/permit/**/*.rb', 'lib/*.rb']
   end
 rescue LoadError
   warn "YARD not available. To compile YARDocs `gem install yard`."
