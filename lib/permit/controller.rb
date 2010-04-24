@@ -45,8 +45,7 @@ module Permit
         # Remove check_authorizations if it was set in a super class so that
         # other before filters that possibly set the needed resource have a
         # chance to run.
-        filter_chain.delete_if {|f| f.method == :check_authorizations}
-        before_filter :check_authorizations unless filter_chain.include?(:check_authorizations)
+        before_filter :check_authorizations
       end
     end
 
@@ -59,25 +58,22 @@ module Permit
         return true
       end
 
-      # Called by {#check_authorizations} when a person is not authorized to 
-      # access the current action. It calls +render_optional_error_file(401)+ on 
-      # the controller, to render a Not Authorized error.
-      #
-      # If +#access_denied+ is already defined on the superclass, or redefined 
-      # in the current controller then that will be called instead.
-      #
-      # @return [false] always returns false.
-      def access_denied
-        defined?(super) ? super : render_optional_error_file(401)
-        return false
-      end
-
       # Evaluates the Permit authorization rules for the current person on the 
-      # current action. If the person is not permitted {#access_denied} will be 
-      # called.
+      # current action. 
+      #
+      # When the person is not permitted, +#access_denied+ will be called if it 
+      # exists. Otherwise Permit::NotAuthorized will be raised.
+      #
+      # @raise [Permit::NotAuthorized] if the person is not permitted, and an 
+      # +#access_denied+ method does not exist.
+      #
+      # @return [Boolean] true if the person is permitted, otherwise false
       def check_authorizations
-        return access_denied unless self.permit_rules.permitted?(permit_authorization_subject, params[:action].to_sym, binding)
-        true
+        if self.permit_rules.permitted?(permit_authorization_subject, params[:action].to_sym, binding)
+          true
+        else
+          defined?(access_denied) ? access_denied : raise(Permit::NotAuthorized)
+        end
       end
 
       # Determines if a person is allowed access by evaluating rules for a 

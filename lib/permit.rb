@@ -23,6 +23,9 @@ module Permit
   # Raised when an error occurs during evaluation of a {PermitRule}.
   class PermitEvaluationError < StandardError; end
 
+  # Raised when a person is not authorized.
+  class NotAuthorized < StandardError; end
+
   # Contains the configuration rules that Permit will apply during its 
   # processing.
   #
