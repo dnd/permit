@@ -2,11 +2,11 @@ module Permit
   module Support
     module ClassMethods
       def class_symbol
-        class_name.underscore.to_sym
+        name.underscore.to_sym
       end
 
       def plural_class_symbol
-        class_name.pluralize.underscore.to_sym
+        name.pluralize.underscore.to_sym
       end
 
       private
