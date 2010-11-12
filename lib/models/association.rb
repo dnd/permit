@@ -27,7 +27,7 @@ module Permit
       # @return [<permit_authorization>] the authorizations found for the role(s).
       def as(roles)
         conditions = authorization_conditions(roles, :any)
-        find(:all, :conditions => conditions)
+        where(conditions)
       end
 
       # Finds all authorizations for the given resource and role(s).

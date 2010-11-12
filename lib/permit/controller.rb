@@ -166,7 +166,7 @@ module Permit
         @controller_subject_method = if Permit::Config.controller_subject_method
           Permit::Config.controller_subject_method
         elsif Permit::Config.person_class
-          klass_name = Permit::Config.person_class.class_name.underscore
+          klass_name = Permit::Config.person_class.name.underscore
           "current_#{klass_name}".to_sym
         else
           :current_person
